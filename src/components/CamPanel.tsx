@@ -57,7 +57,7 @@ export function CamPanel() {
   }, []);
 
   const silentMs = lastSpokeAt ? now - lastSpokeAt : null;
-  const nudgeMs = settings.silenceNudgeMinutes * 60_000;
+  const nudgeMs = settings.silenceNudgeSeconds * 1000;
   const shouldNudge = media.active && silentMs != null && silentMs >= nudgeMs;
 
   return (
@@ -127,7 +127,7 @@ export function CamPanel() {
             threshold {Math.round(settings.speakThreshold * 100)}
           </span>
         </div>
-        <div className="relative h-5 w-full overflow-hidden rounded bg-neutral-800">
+        <div className="relative h-9 w-full overflow-hidden rounded bg-neutral-800">
           <div
             className="absolute inset-y-0 left-0 bg-emerald-500 transition-[width] duration-75"
             style={{ width: `${levelPct}%` }}
@@ -162,20 +162,22 @@ export function CamPanel() {
           <input
             type="number"
             min={1}
-            max={120}
-            value={settings.silenceNudgeMinutes}
+            max={3600}
+            value={settings.silenceNudgeSeconds}
             onChange={(e) =>
-              update({ silenceNudgeMinutes: Math.max(1, parseInt(e.target.value || "1", 10)) })
+              update({ silenceNudgeSeconds: Math.max(1, parseInt(e.target.value || "1", 10)) })
             }
-            className="w-14 rounded bg-neutral-800 px-2 py-1 text-right text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
+            className="w-16 rounded bg-neutral-800 px-2 py-1 text-right text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
           />
-          min
+          sec
         </label>
       </div>
 
       {shouldNudge && (
-        <div className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-          Silent for {formatDuration(silentMs!)} — talk to chat!
+        <div className="nudge-flash pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-8">
+          <div className="rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-2xl">
+            Silent {formatDuration(silentMs!)} — talk to chat!
+          </div>
         </div>
       )}
 

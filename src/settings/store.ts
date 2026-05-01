@@ -7,7 +7,7 @@ export interface Settings {
   audioDeviceId: string;
   autoStartMedia: boolean;
   speakThreshold: number;
-  silenceNudgeMinutes: number;
+  silenceNudgeSeconds: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: Settings = {
   audioDeviceId: "",
   autoStartMedia: false,
   speakThreshold: 0.05,
-  silenceNudgeMinutes: 5,
+  silenceNudgeSeconds: 60,
 };
 
 export function loadSettings(): Settings {
