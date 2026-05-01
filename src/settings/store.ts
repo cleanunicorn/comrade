@@ -9,6 +9,7 @@ export interface Settings {
   speakThreshold: number;
   silenceNudgeSeconds: number;
   nudgeCount: number;
+  chatFontSize: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS: Settings = {
   speakThreshold: 0.05,
   silenceNudgeSeconds: 60,
   nudgeCount: 0,
+  chatFontSize: 14,
 };
 
 export function loadSettings(): Settings {
