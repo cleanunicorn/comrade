@@ -1,5 +1,38 @@
-import { useEffect, useRef, useState } from "react";
-import { useChat } from "../twitch/useChat";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useChat, type ChatMessage } from "../twitch/useChat";
+
+function renderMessage(m: ChatMessage): ReactNode[] {
+  const text = m.text;
+  if (!m.emotes || Object.keys(m.emotes).length === 0) return [text];
+
+  const segs: { start: number; end: number; id: string }[] = [];
+  for (const [id, ranges] of Object.entries(m.emotes)) {
+    for (const r of ranges) {
+      const [s, e] = r.split("-").map(Number);
+      segs.push({ start: s, end: e + 1, id });
+    }
+  }
+  segs.sort((a, b) => a.start - b.start);
+
+  const out: ReactNode[] = [];
+  let cur = 0;
+  segs.forEach((seg, i) => {
+    if (cur < seg.start) out.push(text.slice(cur, seg.start));
+    const name = text.slice(seg.start, seg.end);
+    out.push(
+      <img
+        key={`${m.id}-emote-${i}`}
+        src={`https://static-cdn.jtvnw.net/emoticons/v2/${seg.id}/default/dark/1.0`}
+        alt={name}
+        title={name}
+        className="inline-block h-6 align-middle"
+      />,
+    );
+    cur = seg.end;
+  });
+  if (cur < text.length) out.push(text.slice(cur));
+  return out;
+}
 
 export function ChatPanel() {
   const { messages, status, send } = useChat();
@@ -37,7 +70,7 @@ export function ChatPanel() {
               {m.isMod && "🛡 "}
               {m.displayName}
             </span>
-            <span className="text-neutral-300">: {m.text}</span>
+            <span className="text-neutral-300">: {renderMessage(m)}</span>
           </div>
         ))}
       </div>

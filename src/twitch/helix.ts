@@ -78,6 +78,14 @@ export function helix(accessToken: string, clientId: string) {
       return { chatters: r.data, total: r.total };
     },
 
+    async getUserChatColor(userId: string): Promise<string | null> {
+      const r = await get<{ data: { user_id: string; color: string }[] }>(
+        "/chat/color",
+        { user_id: userId },
+      );
+      return r.data[0]?.color || null;
+    },
+
     async getFollowers(broadcasterId: string, moderatorId: string, first = 20): Promise<Follower[]> {
       const r = await get<{ data: Follower[] }>("/channels/followers", {
         broadcaster_id: broadcasterId,
@@ -85,6 +93,36 @@ export function helix(accessToken: string, clientId: string) {
         first: String(first),
       });
       return r.data;
+    },
+
+    async getAllFollowerIds(broadcasterId: string, moderatorId: string, maxPages = 20): Promise<Set<string>> {
+      const ids = new Set<string>();
+      let cursor: string | undefined;
+      for (let i = 0; i < maxPages; i++) {
+        const params: Record<string, string> = {
+          broadcaster_id: broadcasterId,
+          moderator_id: moderatorId,
+          first: "100",
+        };
+        if (cursor) params.after = cursor;
+        const r = await get<{ data: Follower[]; pagination?: { cursor?: string } }>(
+          "/channels/followers",
+          params,
+        );
+        for (const f of r.data) ids.add(f.user_id);
+        cursor = r.pagination?.cursor;
+        if (!cursor || r.data.length === 0) break;
+      }
+      return ids;
+    },
+
+    async checkFollows(broadcasterId: string, moderatorId: string, userId: string): Promise<boolean> {
+      const r = await get<{ data: Follower[] }>("/channels/followers", {
+        broadcaster_id: broadcasterId,
+        moderator_id: moderatorId,
+        user_id: userId,
+      });
+      return r.data.length > 0;
     },
   };
 }

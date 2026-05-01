@@ -1,6 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import tmi from "tmi.js";
 import { useAuth } from "../auth/AuthContext";
+import { useSettings } from "../settings/SettingsContext";
+import { helix } from "./helix";
+
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const cacheKey = (ch: string) => `comrade.chat.cache.${ch.toLowerCase()}`;
+
+function loadCache(ch: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(cacheKey(ch));
+    if (!raw) return [];
+    const arr = JSON.parse(raw) as ChatMessage[];
+    const cutoff = Date.now() - CACHE_TTL_MS;
+    return arr.filter((m) => m.ts >= cutoff);
+  } catch {
+    return [];
+  }
+}
+
+function saveCache(ch: string, msgs: ChatMessage[]) {
+  try {
+    localStorage.setItem(cacheKey(ch), JSON.stringify(msgs));
+  } catch {
+    // quota exceeded — ignore
+  }
+}
 
 export interface ChatMessage {
   id: string;
@@ -13,6 +38,7 @@ export interface ChatMessage {
   isMod: boolean;
   isSub: boolean;
   isBroadcaster: boolean;
+  emotes?: { [id: string]: string[] };
 }
 
 export interface ChatStatus {
@@ -24,9 +50,21 @@ const MAX_MESSAGES = 300;
 
 export function useChat(channel?: string) {
   const { token, user } = useAuth();
+  const { settings } = useSettings();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>({ connected: false, error: null });
   const clientRef = useRef<tmi.Client | null>(null);
+  const myColorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!token || !user || !settings.twitchClientId) return;
+    helix(token.accessToken, settings.twitchClientId)
+      .getUserChatColor(user.id)
+      .then((c) => {
+        myColorRef.current = c;
+      })
+      .catch(() => {});
+  }, [token, user, settings.twitchClientId]);
 
   useEffect(() => {
     if (!token || !user) return;
@@ -48,8 +86,19 @@ export function useChat(channel?: string) {
       setStatus({ connected: false, error: reason || null }),
     );
 
-    client.on("message", (ch, tags, text, self) => {
-      if (self) return;
+    const cached = loadCache(targetChannel);
+    if (cached.length > 0) {
+      setMessages((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        const merged = [...cached.filter((c) => !seen.has(c.id)), ...prev];
+        merged.sort((a, b) => a.ts - b.ts);
+        if (merged.length > MAX_MESSAGES) merged.splice(0, merged.length - MAX_MESSAGES);
+        return merged;
+      });
+    }
+
+    client.on("message", (ch, tags, text, _self) => {
+      if (_self) return;
       const msg: ChatMessage = {
         id: tags.id ?? `${Date.now()}-${Math.random()}`,
         channel: ch,
@@ -61,8 +110,10 @@ export function useChat(channel?: string) {
         isMod: !!tags.mod,
         isSub: !!tags.subscriber,
         isBroadcaster: tags.badges?.broadcaster === "1",
+        emotes: (tags.emotes as { [id: string]: string[] } | undefined) ?? undefined,
       };
       setMessages((prev) => {
+        if (prev.some((p) => p.id === msg.id)) return prev;
         const next = [...prev, msg];
         if (next.length > MAX_MESSAGES) next.splice(0, next.length - MAX_MESSAGES);
         return next;
@@ -78,11 +129,37 @@ export function useChat(channel?: string) {
     };
   }, [token, user, channel]);
 
+  useEffect(() => {
+    if (!user) return;
+    const targetChannel = (channel ?? user.login).toLowerCase();
+    if (messages.length > 0) saveCache(targetChannel, messages);
+  }, [messages, user, channel]);
+
   function send(text: string) {
     const c = clientRef.current;
     if (!c || !user) return;
     const target = (channel ?? user.login).toLowerCase();
-    c.say(target, text).catch((e) => console.error("send failed", e));
+    c.say(target, text)
+      .then(() => {
+        const msg: ChatMessage = {
+          id: `local-${Date.now()}-${Math.random()}`,
+          channel: `#${target}`,
+          username: user.login,
+          displayName: user.display_name,
+          color: myColorRef.current ?? undefined,
+          text,
+          ts: Date.now(),
+          isMod: false,
+          isSub: false,
+          isBroadcaster: target === user.login.toLowerCase(),
+        };
+        setMessages((prev) => {
+          const next = [...prev, msg];
+          if (next.length > MAX_MESSAGES) next.splice(0, next.length - MAX_MESSAGES);
+          return next;
+        });
+      })
+      .catch((e) => console.error("send failed", e));
   }
 
   return { messages, status, send };

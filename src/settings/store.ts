@@ -8,6 +8,7 @@ export interface Settings {
   autoStartMedia: boolean;
   speakThreshold: number;
   silenceNudgeSeconds: number;
+  nudgeCount: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -18,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoStartMedia: false,
   speakThreshold: 0.05,
   silenceNudgeSeconds: 60,
+  nudgeCount: 0,
 };
 
 export function loadSettings(): Settings {

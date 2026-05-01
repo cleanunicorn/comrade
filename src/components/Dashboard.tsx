@@ -2,6 +2,7 @@ import { useAuth } from "../auth/AuthContext";
 import { CamPanel } from "./CamPanel";
 import { ChatPanel } from "./ChatPanel";
 import { StreamStats } from "./StreamStats";
+import { ViewerList } from "./ViewerList";
 
 export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { user, logout } = useAuth();
@@ -32,12 +33,15 @@ export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
         </div>
       </header>
 
-      <main className="grid flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_1fr_1fr]">
-        <div className="flex min-w-0 flex-col gap-4">
+      <main className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-[1fr_220px_1.2fr] lg:grid-rows-1">
+        <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
           <CamPanel />
           <StreamStats />
         </div>
-        <div className="min-w-0 lg:col-span-2">
+        <div className="flex min-h-0 min-w-0 flex-col">
+          <ViewerList />
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-col">
           <ChatPanel />
         </div>
       </main>

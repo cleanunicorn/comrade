@@ -36,8 +36,9 @@ export function CamPanel() {
     }
   }, [settings.autoStartMedia, media.active, media.start]);
 
-  const levelPct = Math.min(100, Math.round(media.audioLevel * 200));
-  const thresholdPct = Math.round(settings.speakThreshold * 200);
+  const SCALE = 400;
+  const levelPct = Math.min(100, Math.round(media.audioLevel * SCALE));
+  const thresholdPct = Math.min(100, Math.round(settings.speakThreshold * SCALE));
 
   const [lastSpokeAt, setLastSpokeAt] = useState<number | null>(null);
   useEffect(() => {
@@ -59,6 +60,14 @@ export function CamPanel() {
   const silentMs = lastSpokeAt ? now - lastSpokeAt : null;
   const nudgeMs = settings.silenceNudgeSeconds * 1000;
   const shouldNudge = media.active && silentMs != null && silentMs >= nudgeMs;
+
+  const prevNudgeRef = useRef(false);
+  useEffect(() => {
+    if (shouldNudge && !prevNudgeRef.current) {
+      update({ nudgeCount: settings.nudgeCount + 1 });
+    }
+    prevNudgeRef.current = shouldNudge;
+  }, [shouldNudge, settings.nudgeCount, update]);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
@@ -122,15 +131,13 @@ export function CamPanel() {
 
       <div>
         <div className="mb-1 flex items-center justify-between text-xs text-neutral-400">
-          <span>Mic level</span>
-          <span className="text-neutral-500">
-            threshold {Math.round(settings.speakThreshold * 100)}
-          </span>
+          <span>Mic level {levelPct}</span>
+          <span className="text-neutral-500">threshold {thresholdPct}</span>
         </div>
         <div className="relative h-9 w-full overflow-hidden rounded bg-neutral-800">
           <div
             className="absolute inset-y-0 left-0 bg-emerald-500 transition-[width] duration-75"
-            style={{ width: `${levelPct}%` }}
+            style={{ width: `${levelPct * 2}%` }}
           />
           <div
             className="pointer-events-none absolute inset-y-0 w-px bg-amber-300/70"
@@ -139,8 +146,8 @@ export function CamPanel() {
           <input
             type="range"
             min={0}
-            max={0.5}
-            step={0.005}
+            max={0.25}
+            step={0.0025}
             value={settings.speakThreshold}
             onChange={(e) => update({ speakThreshold: parseFloat(e.target.value) })}
             className="threshold-slider absolute inset-0 w-full"
@@ -156,6 +163,16 @@ export function CamPanel() {
             : media.active
               ? "Waiting to detect speech…"
               : "Mic off"}
+        </span>
+        <span className="flex items-center gap-1 text-neutral-400">
+          Nudges: <span className="font-semibold text-neutral-200">{settings.nudgeCount}</span>
+          <button
+            type="button"
+            onClick={() => update({ nudgeCount: 0 })}
+            className="ml-1 rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400 hover:bg-neutral-800"
+          >
+            Reset
+          </button>
         </span>
         <label className="flex items-center gap-1 text-neutral-400">
           Nudge after
