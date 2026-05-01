@@ -1,27 +1,53 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useChat, type ChatMessage } from "../twitch/useChat";
+import { useChat } from "../twitch/ChatContext";
+import { type ChatMessage } from "../twitch/useChat";
+import { emoteUrl, type SevenTvEmote } from "../twitch/sevenTv";
 
-function renderMessage(m: ChatMessage): ReactNode[] {
+function renderTextWith7tv(
+  text: string,
+  sevenTv: Record<string, SevenTvEmote>,
+  keyBase: string,
+): ReactNode[] {
+  if (!text || Object.keys(sevenTv).length === 0) return [text];
+  const tokens = text.split(/(\s+)/);
+  return tokens.map((tok, i) => {
+    const e = sevenTv[tok];
+    if (!e) return tok;
+    return (
+      <img
+        key={`${keyBase}-7tv-${i}`}
+        src={emoteUrl(e.id, 2)}
+        alt={tok}
+        title={tok}
+        className="inline-block h-6 align-middle"
+      />
+    );
+  });
+}
+
+function renderMessage(m: ChatMessage, sevenTv: Record<string, SevenTvEmote>): ReactNode[] {
   const text = m.text;
-  if (!m.emotes || Object.keys(m.emotes).length === 0) return [text];
-
-  const segs: { start: number; end: number; id: string }[] = [];
-  for (const [id, ranges] of Object.entries(m.emotes)) {
-    for (const r of ranges) {
-      const [s, e] = r.split("-").map(Number);
-      segs.push({ start: s, end: e + 1, id });
+  const twitchSegs: { start: number; end: number; id: string }[] = [];
+  if (m.emotes) {
+    for (const [id, ranges] of Object.entries(m.emotes)) {
+      for (const r of ranges) {
+        const [s, e] = r.split("-").map(Number);
+        twitchSegs.push({ start: s, end: e + 1, id });
+      }
     }
+    twitchSegs.sort((a, b) => a.start - b.start);
   }
-  segs.sort((a, b) => a.start - b.start);
 
   const out: ReactNode[] = [];
   let cur = 0;
-  segs.forEach((seg, i) => {
-    if (cur < seg.start) out.push(text.slice(cur, seg.start));
+  twitchSegs.forEach((seg, i) => {
+    if (cur < seg.start) {
+      out.push(...renderTextWith7tv(text.slice(cur, seg.start), sevenTv, `${m.id}-pre${i}`));
+    }
     const name = text.slice(seg.start, seg.end);
     out.push(
       <img
-        key={`${m.id}-emote-${i}`}
+        key={`${m.id}-tw-${i}`}
         src={`https://static-cdn.jtvnw.net/emoticons/v2/${seg.id}/default/dark/1.0`}
         alt={name}
         title={name}
@@ -30,12 +56,14 @@ function renderMessage(m: ChatMessage): ReactNode[] {
     );
     cur = seg.end;
   });
-  if (cur < text.length) out.push(text.slice(cur));
+  if (cur < text.length) {
+    out.push(...renderTextWith7tv(text.slice(cur), sevenTv, `${m.id}-tail`));
+  }
   return out;
 }
 
 export function ChatPanel() {
-  const { messages, status, send } = useChat();
+  const { messages, status, send, sevenTvEmotes } = useChat();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -70,7 +98,7 @@ export function ChatPanel() {
               {m.isMod && "🛡 "}
               {m.displayName}
             </span>
-            <span className="text-neutral-300">: {renderMessage(m)}</span>
+            <span className="text-neutral-300">: {renderMessage(m, sevenTvEmotes)}</span>
           </div>
         ))}
       </div>

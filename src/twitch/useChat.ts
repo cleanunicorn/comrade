@@ -3,6 +3,7 @@ import tmi from "tmi.js";
 import { useAuth } from "../auth/AuthContext";
 import { useSettings } from "../settings/SettingsContext";
 import { helix } from "./helix";
+import { fetch7tvChannel, fetch7tvGlobal, type SevenTvEmote } from "./sevenTv";
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 const cacheKey = (ch: string) => `comrade.chat.cache.${ch.toLowerCase()}`;
@@ -48,13 +49,30 @@ export interface ChatStatus {
 
 const MAX_MESSAGES = 300;
 
-export function useChat(channel?: string) {
+export function useChatImpl(channel?: string) {
   const { token, user } = useAuth();
   const { settings } = useSettings();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>({ connected: false, error: null });
   const clientRef = useRef<tmi.Client | null>(null);
   const myColorRef = useRef<string | null>(null);
+  const [sevenTvEmotes, setSevenTvEmotes] = useState<Record<string, SevenTvEmote>>({});
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const channelUserId = user.id;
+    Promise.all([fetch7tvGlobal(), fetch7tvChannel(channelUserId)]).then(([global, ch]) => {
+      if (cancelled) return;
+      const map: Record<string, SevenTvEmote> = {};
+      for (const e of global) map[e.name] = e;
+      for (const e of ch) map[e.name] = e;
+      setSevenTvEmotes(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, channel]);
 
   useEffect(() => {
     if (!token || !user || !settings.twitchClientId) return;
@@ -162,5 +180,5 @@ export function useChat(channel?: string) {
       .catch((e) => console.error("send failed", e));
   }
 
-  return { messages, status, send };
+  return { messages, status, send, sevenTvEmotes };
 }

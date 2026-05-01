@@ -1,4 +1,5 @@
 import { useAuth } from "../auth/AuthContext";
+import { ChatProvider } from "../twitch/ChatContext";
 import { CamPanel } from "./CamPanel";
 import { ChatPanel } from "./ChatPanel";
 import { StreamStats } from "./StreamStats";
@@ -9,6 +10,7 @@ export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
   if (!user) return null;
 
   return (
+    <ChatProvider>
     <div className="flex h-full flex-col">
       <header className="flex items-center justify-between border-b border-neutral-800 px-6 py-3">
         <div className="flex items-center gap-3">
@@ -46,5 +48,6 @@ export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
         </div>
       </main>
     </div>
+    </ChatProvider>
   );
 }

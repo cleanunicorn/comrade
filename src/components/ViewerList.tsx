@@ -1,21 +1,85 @@
-import { useState } from "react";
-import { useViewers } from "../twitch/useViewers";
+import { useMemo, useState } from "react";
+import { useViewers, type ViewerEntry } from "../twitch/useViewers";
+import { useChat } from "../twitch/ChatContext";
 
-type Filter = "all" | "following" | "not";
+type Filter = "all" | "following" | "not" | "muted";
+
+interface MergedViewer extends ViewerEntry {
+  isMod: boolean;
+  isBroadcaster: boolean;
+  isMuted: boolean;
+}
+
+function pickEmoji(v: MergedViewer): { emoji: string; title: string } {
+  if (v.isBroadcaster) return { emoji: "👑", title: "Broadcaster" };
+  if (v.isMod) return { emoji: "🛡️", title: "Moderator" };
+  if (v.isMuted && v.follows) return { emoji: "🔇", title: "Muted (chatting, not viewing) — follows" };
+  if (v.isMuted) return { emoji: "🔇", title: "Muted (chatting, not viewing)" };
+  if (v.follows) return { emoji: "❤️", title: "Following" };
+  return { emoji: "👁️", title: "Viewer" };
+}
 
 export function ViewerList() {
   const { viewers, total, loaded, loading, lastFetchAt, error, refresh } = useViewers();
+  const { messages } = useChat();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const followCount = viewers.filter((v) => v.follows).length;
-  const notCount = viewers.length - followCount;
+  const merged = useMemo<MergedViewer[]>(() => {
+    const byLogin = new Map<string, MergedViewer>();
+    for (const v of viewers) {
+      byLogin.set(v.user_login.toLowerCase(), {
+        ...v,
+        isMod: false,
+        isBroadcaster: false,
+        isMuted: false,
+      });
+    }
+
+    // walk messages newest-first, derive role flags + add muted (chat-only) entries
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      const login = m.username.toLowerCase();
+      const existing = byLogin.get(login);
+      if (existing) {
+        if (m.isMod) existing.isMod = true;
+        if (m.isBroadcaster) existing.isBroadcaster = true;
+      } else {
+        // chatted but not in /chat/chatters → muted
+        byLogin.set(login, {
+          user_id: `chat-${login}`,
+          user_login: login,
+          user_name: m.displayName,
+          follows: false, // unknown — could enhance with per-user check
+          isMod: m.isMod,
+          isBroadcaster: m.isBroadcaster,
+          isMuted: true,
+        });
+      }
+    }
+
+    const arr = Array.from(byLogin.values());
+    arr.sort((a, b) => {
+      const rank = (x: MergedViewer) =>
+        x.isBroadcaster ? 0 : x.isMod ? 1 : x.isMuted ? 4 : x.follows ? 2 : 3;
+      const r = rank(a) - rank(b);
+      if (r !== 0) return r;
+      return a.user_login.localeCompare(b.user_login);
+    });
+    return arr;
+  }, [viewers, messages]);
+
+  const followCount = merged.filter((v) => v.follows && !v.isMuted).length;
+  const notCount = merged.filter((v) => !v.follows && !v.isMuted).length;
+  const mutedCount = merged.filter((v) => v.isMuted).length;
 
   const shown =
     filter === "all"
-      ? viewers
+      ? merged
       : filter === "following"
-        ? viewers.filter((v) => v.follows)
-        : viewers.filter((v) => !v.follows);
+        ? merged.filter((v) => v.follows && !v.isMuted)
+        : filter === "muted"
+          ? merged.filter((v) => v.isMuted)
+          : merged.filter((v) => !v.follows && !v.isMuted);
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
@@ -34,38 +98,42 @@ export function ViewerList() {
             {loading ? "…" : "↻"}
           </button>
         </div>
-        <div className="flex gap-1 text-[10px]">
+        <div className="flex flex-wrap gap-1 text-[10px]">
           <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
-            All {viewers.length}
+            All {merged.length}
           </FilterBtn>
           <FilterBtn active={filter === "following"} onClick={() => setFilter("following")}>
-            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            {followCount}
+            ❤️ {followCount}
           </FilterBtn>
           <FilterBtn active={filter === "not"} onClick={() => setFilter("not")}>
-            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
-            {notCount}
+            👁️ {notCount}
+          </FilterBtn>
+          <FilterBtn active={filter === "muted"} onClick={() => setFilter("muted")}>
+            🔇 {mutedCount}
           </FilterBtn>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 text-xs">
         {!loaded && <div className="p-2 text-neutral-500">Loading…</div>}
-        {loaded && shown.length === 0 && (
-          <div className="p-2 text-neutral-500">No viewers</div>
-        )}
+        {loaded && shown.length === 0 && <div className="p-2 text-neutral-500">No viewers</div>}
         <ul className="space-y-0.5">
-          {shown.map((v) => (
-            <li key={v.user_id} className="flex items-center gap-2 rounded px-2 py-1 hover:bg-neutral-800/50">
-              <span
-                className={`h-2 w-2 shrink-0 rounded-full ${
-                  v.follows ? "bg-emerald-500" : "bg-red-500"
-                }`}
-                title={v.follows ? "Following" : "Not following"}
-              />
-              <span className="truncate text-neutral-200">{v.user_name}</span>
-            </li>
-          ))}
+          {shown.map((v) => {
+            const { emoji, title } = pickEmoji(v);
+            return (
+              <li
+                key={v.user_id}
+                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-neutral-800/50"
+              >
+                <span title={title} className="shrink-0 text-sm leading-none">
+                  {emoji}
+                </span>
+                <span className={`truncate ${v.isMuted ? "text-neutral-400 italic" : "text-neutral-200"}`}>
+                  {v.user_name}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </div>
 
@@ -94,7 +162,7 @@ function FilterBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center rounded border px-2 py-0.5 ${
+      className={`flex items-center gap-0.5 rounded border px-2 py-0.5 ${
         active
           ? "border-violet-500 bg-violet-600/20 text-violet-200"
           : "border-neutral-700 text-neutral-400 hover:bg-neutral-800"
