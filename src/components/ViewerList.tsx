@@ -4,7 +4,7 @@ import { useViewers } from "../twitch/useViewers";
 type Filter = "all" | "following" | "not";
 
 export function ViewerList() {
-  const { viewers, total, loaded, error } = useViewers();
+  const { viewers, total, loaded, loading, lastFetchAt, error, refresh } = useViewers();
   const [filter, setFilter] = useState<Filter>("all");
 
   const followCount = viewers.filter((v) => v.follows).length;
@@ -19,10 +19,21 @@ export function ViewerList() {
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
-      <div className="flex items-center justify-between border-b border-neutral-800 p-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
-          Viewers {total > 0 && <span className="text-neutral-500">({total})</span>}
-        </h2>
+      <div className="flex flex-col gap-2 border-b border-neutral-800 p-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
+            Viewers {total > 0 && <span className="text-neutral-500">({total})</span>}
+          </h2>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            title={lastFetchAt ? `Updated ${formatAge(Date.now() - lastFetchAt)} ago` : "Refresh"}
+            className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
+          >
+            {loading ? "…" : "↻"}
+          </button>
+        </div>
         <div className="flex gap-1 text-[10px]">
           <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
             All {viewers.length}
@@ -61,6 +72,13 @@ export function ViewerList() {
       {error && <div className="border-t border-neutral-800 p-2 text-[10px] text-red-400">{error}</div>}
     </div>
   );
+}
+
+function formatAge(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  return `${m}m`;
 }
 
 function FilterBtn({
