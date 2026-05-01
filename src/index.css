@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #0e0e10;
+  color: #efeff1;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.threshold-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  outline: none;
+  cursor: ew-resize;
+  pointer-events: auto;
+}
+.threshold-slider::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+  border: none;
+}
+.threshold-slider::-moz-range-track {
+  background: transparent;
+  height: 100%;
+  border: none;
+}
+.threshold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 4px;
+  height: 18px;
+  background: #fbbf24;
+  border-radius: 2px;
+  border: 1px solid #000;
+  margin-top: -4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
+.threshold-slider::-moz-range-thumb {
+  width: 4px;
+  height: 18px;
+  background: #fbbf24;
+  border-radius: 2px;
+  border: 1px solid #000;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+}
