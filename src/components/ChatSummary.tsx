@@ -157,7 +157,7 @@ export function ChatSummary() {
       {error && <div className="mb-2 text-xs text-red-400">{error}</div>}
 
       {summary ? (
-        <div className="markdown-summary max-h-72 overflow-y-auto rounded bg-neutral-900/60 p-3 text-xs text-neutral-200">
+        <div className="markdown-summary max-h-144 overflow-y-auto rounded bg-neutral-900/60 p-3 text-xs text-neutral-200">
           <ReactMarkdown>{summary}</ReactMarkdown>
         </div>
       ) : (
