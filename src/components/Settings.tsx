@@ -11,12 +11,17 @@ export function Settings({ onDone, embedded }: Props) {
   const { settings, update } = useSettings();
   const [clientId, setClientId] = useState(settings.twitchClientId);
   const [redirectUri, setRedirectUri] = useState(settings.redirectUri);
+  const [steamAccountId, setSteamAccountId] = useState(settings.steamAccountId);
   const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   function save(e: React.FormEvent) {
     e.preventDefault();
-    update({ twitchClientId: clientId.trim(), redirectUri: redirectUri.trim() });
+    update({
+      twitchClientId: clientId.trim(),
+      redirectUri: redirectUri.trim(),
+      steamAccountId: steamAccountId.trim(),
+    });
     onDone?.();
   }
 
@@ -89,6 +94,30 @@ export function Settings({ onDone, embedded }: Props) {
           />
           <p className="text-xs text-neutral-500">
             Default: <code className="text-neutral-400">{window.location.origin}/</code>
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-neutral-300">Steam Account ID (Deadlock)</label>
+          <input
+            value={steamAccountId}
+            onChange={(e) => setSteamAccountId(e.target.value.replace(/[^\d]/g, ""))}
+            placeholder="123456789"
+            inputMode="numeric"
+            className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+          />
+          <p className="text-xs text-neutral-500">
+            Optional. Enables Deadlock live-match panel. Use the integer Steam ID3 (the
+            number, not your username). Find it via{" "}
+            <a
+              href="https://steamid.io/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-violet-400 underline"
+            >
+              steamid.io
+            </a>
+            {" "}— paste your profile URL, copy the value labeled "steamID3" (only the digits).
           </p>
         </div>
 

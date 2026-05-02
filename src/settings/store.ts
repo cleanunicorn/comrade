@@ -12,6 +12,7 @@ export interface Settings {
   chatFontSize: number;
   enableVideo: boolean;
   enableAudio: boolean;
+  steamAccountId: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
   chatFontSize: 14,
   enableVideo: true,
   enableAudio: true,
+  steamAccountId: "",
 };
 
 export function loadSettings(): Settings {

@@ -3,6 +3,7 @@ import { ChatProvider } from "../twitch/ChatContext";
 import { downloadExport } from "../settings/exportImport";
 import { CamPanel } from "./CamPanel";
 import { ChatPanel } from "./ChatPanel";
+import { DeadlockHUD } from "./DeadlockHUD";
 import { StreamStats } from "./StreamStats";
 import { ViewerList } from "./ViewerList";
 
@@ -47,6 +48,7 @@ export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
         <div className="flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto">
           <CamPanel />
           <StreamStats />
+          <DeadlockHUD />
         </div>
         <div className="flex min-h-0 min-w-0 flex-col">
           <ViewerList />
