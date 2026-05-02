@@ -71,7 +71,7 @@ export function ChatSummary() {
         const game = stream?.game_name ? `Game: ${stream.game_name}\n` : "";
         const title = stream?.title ? `Title: ${stream.title}\n` : "";
         const sysPrompt = opts.post
-          ? "Write ONE short sentence (≤350 chars, no markdown, no list) summarizing the recent Twitch chat for the chat itself. Tone skarky, sarcastic, my chat can take it."
+          ? "Write ONE short sentence (≤350 chars, no markdown, no list) summarizing the recent Twitch chat for the chat itself. Tone skarky, sarcastic, my chat can take it. Use a little bit of leet speak, make grammar mistakes."
           : "You summarize live Twitch chat for the streamer. Be concise. Format the response in Markdown " +
             "with short sections (use ## headings): Mood, Notable questions, Main topics, Standout viewers. " +
             "Use bullet lists. Skip greetings and bot spam. Surface direct questions to the streamer.";
@@ -94,8 +94,8 @@ export function ChatSummary() {
             { role: "system", content: sysPrompt },
             { role: "user", content: userPrompt },
           ],
-          temperature: 0.4,
-          maxTokens: 2048,
+          temperature: 1.4,
+          maxTokens: 16000,
         });
         if (opts.post) {
           const trimmed = text.replace(/\s+/g, " ").trim().slice(0, POST_MAX_CHARS);
