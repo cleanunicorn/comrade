@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { Dashboard } from "./components/Dashboard";
 import { Login } from "./components/Login";
@@ -33,6 +34,7 @@ export default function App() {
       <AuthProvider>
         <Shell />
       </AuthProvider>
+      <Analytics />
     </SettingsProvider>
   );
 }
