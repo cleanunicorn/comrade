@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useViewers, type ViewerEntry } from "../twitch/useViewers";
 import { useChat } from "../twitch/ChatContext";
+import { useSettings } from "../settings/SettingsContext";
+import { FontSizer } from "./FontSizer";
 
 type Filter = "all" | "following" | "not" | "muted";
 
@@ -22,6 +24,7 @@ function pickEmoji(v: MergedViewer): { emoji: string; title: string } {
 export function ViewerList() {
   const { viewers, total, loaded, loading, lastFetchAt, error, refresh } = useViewers();
   const { messages } = useChat();
+  const { settings, update } = useSettings();
   const [filter, setFilter] = useState<Filter>("all");
 
   const merged = useMemo<MergedViewer[]>(() => {
@@ -85,9 +88,15 @@ export function ViewerList() {
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
       <div className="flex flex-col gap-2 border-b border-neutral-800 p-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
-            Viewers {total > 0 && <span className="text-neutral-500">({total})</span>}
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
+              Viewers {total > 0 && <span className="text-neutral-500">({total})</span>}
+            </h2>
+            <FontSizer
+              value={settings.viewersFontSize}
+              onChange={(n) => update({ viewersFontSize: n })}
+            />
+          </div>
           <button
             type="button"
             onClick={refresh}
@@ -114,7 +123,7 @@ export function ViewerList() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 text-xs">
+      <div className="flex-1 overflow-y-auto p-2" style={{ fontSize: `${settings.viewersFontSize}px` }}>
         {!loaded && <div className="p-2 text-neutral-500">Loading…</div>}
         {loaded && shown.length === 0 && <div className="p-2 text-neutral-500">No viewers</div>}
         <ul className="space-y-0.5">

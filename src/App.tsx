@@ -5,6 +5,7 @@ import { Dashboard } from "./components/Dashboard";
 import { Login } from "./components/Login";
 import { Settings } from "./components/Settings";
 import { SettingsProvider, useSettings } from "./settings/SettingsContext";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function Shell() {
   const { ready } = useSettings();
@@ -35,6 +36,7 @@ export default function App() {
         <Shell />
       </AuthProvider>
       <Analytics />
+      <SpeedInsights />
     </SettingsProvider>
   );
 }

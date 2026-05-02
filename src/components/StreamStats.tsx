@@ -1,4 +1,6 @@
 import { useStreamInfo } from "../twitch/useStreamInfo";
+import { useSettings } from "../settings/SettingsContext";
+import { FontSizer } from "./FontSizer";
 
 function fmtUptime(startedAt: string): string {
   const ms = Date.now() - new Date(startedAt).getTime();
@@ -10,15 +12,20 @@ function fmtUptime(startedAt: string): string {
 
 export function StreamStats() {
   const { stream, chatterCount } = useStreamInfo();
+  const { settings, update } = useSettings();
+  const fontSize = settings.statsFontSize;
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-400">Stream</h2>
+    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4" style={{ fontSize: `${fontSize}px` }}>
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Stream</h2>
+        <FontSizer value={fontSize} onChange={(n) => update({ statsFontSize: n })} />
+      </div>
 
       {!stream ? (
         <div className="text-neutral-500">Offline</div>
       ) : (
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2">
           <div className="font-semibold text-white">{stream.title}</div>
           <div className="text-neutral-400">{stream.game_name}</div>
           <div className="grid grid-cols-3 gap-2 pt-2">

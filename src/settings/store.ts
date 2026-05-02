@@ -16,6 +16,12 @@ export interface Settings {
   llmBaseUrl: string;
   llmModel: string;
   summaryAutoMinutes: number;
+  chatPostSummaryMinutes: number;
+  chatPostWindowMinutes: number;
+  camFontSize: number;
+  statsFontSize: number;
+  summaryFontSize: number;
+  viewersFontSize: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -34,6 +40,12 @@ export const DEFAULT_SETTINGS: Settings = {
   llmBaseUrl: "https://api.openai.com/v1",
   llmModel: "gpt-4o-mini",
   summaryAutoMinutes: 0,
+  chatPostSummaryMinutes: 0,
+  chatPostWindowMinutes: 10,
+  camFontSize: 12,
+  statsFontSize: 14,
+  summaryFontSize: 12,
+  viewersFontSize: 12,
 };
 
 export function loadSettings(): Settings {

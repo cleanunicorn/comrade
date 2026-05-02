@@ -3,9 +3,7 @@ import { useChat } from "../twitch/ChatContext";
 import { type ChatMessage } from "../twitch/useChat";
 import { emoteUrl, type SevenTvEmote } from "../twitch/sevenTv";
 import { useSettings } from "../settings/SettingsContext";
-
-const FONT_MIN = 10;
-const FONT_MAX = 28;
+import { FontSizer } from "./FontSizer";
 
 function renderTextWith7tv(
   text: string,
@@ -72,9 +70,7 @@ export function ChatPanel() {
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const fontSize = Math.min(FONT_MAX, Math.max(FONT_MIN, settings.chatFontSize));
-  const setFont = (n: number) =>
-    update({ chatFontSize: Math.min(FONT_MAX, Math.max(FONT_MIN, n)) });
+  const fontSize = settings.chatFontSize;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -90,33 +86,13 @@ export function ChatPanel() {
   return (
     <div className="flex h-full flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
       <div className="flex items-center justify-between gap-2 border-b border-neutral-800 p-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Chat</h2>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setFont(fontSize - 1)}
-              disabled={fontSize <= FONT_MIN}
-              title="Decrease font size"
-              className="rounded border border-neutral-700 px-2 py-0.5 text-xs leading-none text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
-            >
-              −
-            </button>
-            <span className="w-6 text-center text-[10px] tabular-nums text-neutral-500">{fontSize}</span>
-            <button
-              type="button"
-              onClick={() => setFont(fontSize + 1)}
-              disabled={fontSize >= FONT_MAX}
-              title="Increase font size"
-              className="rounded border border-neutral-700 px-2 py-0.5 text-xs leading-none text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
-            >
-              +
-            </button>
-          </div>
-          <span className={`text-xs ${status.connected ? "text-emerald-400" : "text-neutral-500"}`}>
-            {status.connected ? "● live" : "○ disconnected"}
-          </span>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Chat</h2>
+          <FontSizer value={fontSize} onChange={(n) => update({ chatFontSize: n })} />
         </div>
+        <span className={`text-xs ${status.connected ? "text-emerald-400" : "text-neutral-500"}`}>
+          {status.connected ? "● live" : "○ disconnected"}
+        </span>
       </div>
 
       <div

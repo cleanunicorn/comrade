@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMedia } from "../media/useMedia";
 import { useDevices } from "../media/useDevices";
 import { useSettings } from "../settings/SettingsContext";
+import { FontSizer } from "./FontSizer";
 
 export function CamPanel() {
   const { settings, update } = useSettings();
@@ -72,9 +73,15 @@ export function CamPanel() {
   }, [shouldNudge, settings.nudgeCount, update]);
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
+    <div
+      className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
+      style={{ fontSize: `${settings.camFontSize}px` }}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Camera + Mic</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Camera + Mic</h2>
+          <FontSizer value={settings.camFontSize} onChange={(n) => update({ camFontSize: n })} />
+        </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex cursor-pointer items-center gap-1.5 text-xs text-neutral-400 select-none">
             <input
