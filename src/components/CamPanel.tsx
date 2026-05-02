@@ -7,11 +7,12 @@ export function CamPanel() {
   const { settings, update } = useSettings();
   const devices = useDevices();
   const media = useMedia({
-    audio: true,
-    video: true,
+    audio: settings.enableAudio,
+    video: settings.enableVideo,
     videoDeviceId: settings.videoDeviceId || undefined,
     audioDeviceId: settings.audioDeviceId || undefined,
   });
+  const bothDisabled = !settings.enableAudio && !settings.enableVideo;
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
@@ -23,14 +24,15 @@ export function CamPanel() {
   useEffect(() => {
     if (media.active) {
       media.stop();
+      if (bothDisabled) return;
       const t = setTimeout(() => media.start(), 50);
       return () => clearTimeout(t);
     }
-  }, [settings.videoDeviceId, settings.audioDeviceId]);
+  }, [settings.videoDeviceId, settings.audioDeviceId, settings.enableVideo, settings.enableAudio, bothDisabled]);
 
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (settings.autoStartMedia && !autoStartedRef.current && !media.active) {
+    if (settings.autoStartMedia && !autoStartedRef.current && !media.active && !bothDisabled) {
       autoStartedRef.current = true;
       media.start();
     }
@@ -71,10 +73,10 @@ export function CamPanel() {
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Camera + Mic</h2>
-        <div className="flex items-center gap-3">
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-neutral-400 select-none">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-neutral-400 select-none">
             <input
               type="checkbox"
               checked={settings.autoStartMedia}
@@ -88,7 +90,12 @@ export function CamPanel() {
               Stop
             </button>
           ) : (
-            <button onClick={media.start} className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold hover:bg-emerald-500">
+            <button
+              onClick={media.start}
+              disabled={bothDisabled}
+              title={bothDisabled ? "Enable cam or mic first" : ""}
+              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600"
+            >
               Start
             </button>
           )}
@@ -111,6 +118,8 @@ export function CamPanel() {
           value={settings.videoDeviceId}
           onChange={(id) => update({ videoDeviceId: id })}
           placeholderLabel="Camera"
+          enabled={settings.enableVideo}
+          onToggleEnabled={(v) => update({ enableVideo: v })}
         />
         <DevicePicker
           label="Microphone"
@@ -118,6 +127,8 @@ export function CamPanel() {
           value={settings.audioDeviceId}
           onChange={(id) => update({ audioDeviceId: id })}
           placeholderLabel="Microphone"
+          enabled={settings.enableAudio}
+          onToggleEnabled={(v) => update({ enableAudio: v })}
         />
         {!devices.permissionGranted && (
           <button
@@ -220,16 +231,36 @@ interface DevicePickerProps {
   value: string;
   onChange: (id: string) => void;
   placeholderLabel: string;
+  enabled: boolean;
+  onToggleEnabled: (v: boolean) => void;
 }
 
-function DevicePicker({ label, devices, value, onChange, placeholderLabel }: DevicePickerProps) {
+function DevicePicker({
+  label,
+  devices,
+  value,
+  onChange,
+  placeholderLabel,
+  enabled,
+  onToggleEnabled,
+}: DevicePickerProps) {
   return (
-    <label className="flex min-w-0 items-center gap-2 text-xs">
-      <span className="w-20 shrink-0 text-neutral-400">{label}</span>
+    <div className="flex min-w-0 items-center gap-2 text-xs">
+      <input
+        type="checkbox"
+        checked={enabled}
+        onChange={(e) => onToggleEnabled(e.target.checked)}
+        title={enabled ? `Disable ${label.toLowerCase()}` : `Enable ${label.toLowerCase()}`}
+        className="h-3.5 w-3.5 shrink-0 accent-violet-500"
+      />
+      <span className={`w-16 shrink-0 ${enabled ? "text-neutral-400" : "text-neutral-600 line-through"}`}>
+        {label}
+      </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="min-w-0 flex-1 truncate rounded bg-neutral-800 px-2 py-1 text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
+        disabled={!enabled}
+        className="min-w-0 flex-1 truncate rounded bg-neutral-800 px-2 py-1 text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-40"
       >
         <option value="">Default {placeholderLabel.toLowerCase()}</option>
         {devices.map((d) => (
@@ -238,6 +269,6 @@ function DevicePicker({ label, devices, value, onChange, placeholderLabel }: Dev
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }

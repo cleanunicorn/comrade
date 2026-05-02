@@ -10,6 +10,8 @@ export interface Settings {
   silenceNudgeSeconds: number;
   nudgeCount: number;
   chatFontSize: number;
+  enableVideo: boolean;
+  enableAudio: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +24,8 @@ export const DEFAULT_SETTINGS: Settings = {
   silenceNudgeSeconds: 60,
   nudgeCount: 0,
   chatFontSize: 14,
+  enableVideo: true,
+  enableAudio: true,
 };
 
 export function loadSettings(): Settings {
