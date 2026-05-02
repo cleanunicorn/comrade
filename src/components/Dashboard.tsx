@@ -1,5 +1,6 @@
 import { useAuth } from "../auth/AuthContext";
 import { ChatProvider } from "../twitch/ChatContext";
+import { downloadExport } from "../settings/exportImport";
 import { CamPanel } from "./CamPanel";
 import { ChatPanel } from "./ChatPanel";
 import { StreamStats } from "./StreamStats";
@@ -20,6 +21,13 @@ export function Dashboard({ onOpenSettings }: { onOpenSettings: () => void }) {
         </div>
         <div className="flex items-center gap-3">
           <img src={user.profile_image_url} alt="" className="h-8 w-8 rounded-full" />
+          <button
+            onClick={downloadExport}
+            title="Download all settings + chat cache as JSON"
+            className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-300 hover:bg-neutral-800"
+          >
+            Export
+          </button>
           <button
             onClick={onOpenSettings}
             className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-300 hover:bg-neutral-800"

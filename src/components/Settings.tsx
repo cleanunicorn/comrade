@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSettings } from "../settings/SettingsContext";
+import { downloadExport, importAll, readJsonFile } from "../settings/exportImport";
 
 interface Props {
   onDone?: () => void;
@@ -10,11 +11,35 @@ export function Settings({ onDone, embedded }: Props) {
   const { settings, update } = useSettings();
   const [clientId, setClientId] = useState(settings.twitchClientId);
   const [redirectUri, setRedirectUri] = useState(settings.redirectUri);
+  const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   function save(e: React.FormEvent) {
     e.preventDefault();
     update({ twitchClientId: clientId.trim(), redirectUri: redirectUri.trim() });
     onDone?.();
+  }
+
+  async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const json = await readJsonFile(file);
+      const wipe = window.confirm(
+        "Wipe existing Comrade data before importing?\n\nOK = wipe + import (clean replace)\nCancel = merge (keys in file overwrite, others kept)",
+      );
+      const res = importAll(json, { wipeExisting: wipe });
+      if (!res.ok) {
+        setImportMsg({ kind: "err", text: res.error ?? "Import failed" });
+        return;
+      }
+      setImportMsg({ kind: "ok", text: `Imported ${res.imported} keys. Reloading…` });
+      setTimeout(() => window.location.reload(), 600);
+    } catch (err) {
+      setImportMsg({ kind: "err", text: String(err) });
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
   }
 
   return (
@@ -65,6 +90,41 @@ export function Settings({ onDone, embedded }: Props) {
           <p className="text-xs text-neutral-500">
             Default: <code className="text-neutral-400">{window.location.origin}/</code>
           </p>
+        </div>
+
+        <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+          <div className="text-sm font-medium text-neutral-300">Backup</div>
+          <p className="text-xs text-neutral-500">
+            Export/import all Comrade localStorage (settings, OAuth token, chat cache).
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={downloadExport}
+              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
+            >
+              Export JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
+            >
+              Import JSON
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={onImportFile}
+              className="hidden"
+            />
+          </div>
+          {importMsg && (
+            <div className={`text-xs ${importMsg.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+              {importMsg.text}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between pt-2">
