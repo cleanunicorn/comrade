@@ -53,3 +53,41 @@ html, body, #root {
 .nudge-flash {
   animation: nudge-flash 0.7s ease-in-out infinite;
 }
+
+.markdown-summary h1,
+.markdown-summary h2,
+.markdown-summary h3 {
+  font-weight: 700;
+  color: #efeff1;
+  margin: 0.6em 0 0.3em;
+  font-size: 0.85rem;
+}
+.markdown-summary h1 { font-size: 0.95rem; }
+.markdown-summary h2 { font-size: 0.85rem; color: #c4b5fd; }
+.markdown-summary h3 { font-size: 0.8rem; color: #a78bfa; }
+.markdown-summary p { margin: 0.3em 0; }
+.markdown-summary ul,
+.markdown-summary ol {
+  margin: 0.3em 0;
+  padding-left: 1.1em;
+}
+.markdown-summary li { margin: 0.15em 0; }
+.markdown-summary ul { list-style: disc; }
+.markdown-summary ol { list-style: decimal; }
+.markdown-summary code {
+  background: rgba(255,255,255,0.08);
+  padding: 0 0.25em;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+.markdown-summary strong { color: #fafafa; }
+.markdown-summary em { color: #d4d4d8; }
+.markdown-summary a { color: #a78bfa; text-decoration: underline; }
+.markdown-summary blockquote {
+  border-left: 2px solid #525252;
+  padding-left: 0.6em;
+  color: #a3a3a3;
+  margin: 0.4em 0;
+}
+.markdown-summary > *:first-child { margin-top: 0; }
+.markdown-summary > *:last-child { margin-bottom: 0; }

@@ -12,6 +12,10 @@ export interface Settings {
   chatFontSize: number;
   enableVideo: boolean;
   enableAudio: boolean;
+  llmApiKey: string;
+  llmBaseUrl: string;
+  llmModel: string;
+  summaryAutoMinutes: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,6 +30,10 @@ export const DEFAULT_SETTINGS: Settings = {
   chatFontSize: 14,
   enableVideo: true,
   enableAudio: true,
+  llmApiKey: "",
+  llmBaseUrl: "https://api.openai.com/v1",
+  llmModel: "gpt-4o-mini",
+  summaryAutoMinutes: 0,
 };
 
 export function loadSettings(): Settings {

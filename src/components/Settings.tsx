@@ -11,12 +11,21 @@ export function Settings({ onDone, embedded }: Props) {
   const { settings, update } = useSettings();
   const [clientId, setClientId] = useState(settings.twitchClientId);
   const [redirectUri, setRedirectUri] = useState(settings.redirectUri);
+  const [llmApiKey, setLlmApiKey] = useState(settings.llmApiKey);
+  const [llmBaseUrl, setLlmBaseUrl] = useState(settings.llmBaseUrl);
+  const [llmModel, setLlmModel] = useState(settings.llmModel);
   const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   function save(e: React.FormEvent) {
     e.preventDefault();
-    update({ twitchClientId: clientId.trim(), redirectUri: redirectUri.trim() });
+    update({
+      twitchClientId: clientId.trim(),
+      redirectUri: redirectUri.trim(),
+      llmApiKey: llmApiKey.trim(),
+      llmBaseUrl: llmBaseUrl.trim() || "https://api.openai.com/v1",
+      llmModel: llmModel.trim() || "gpt-4o-mini",
+    });
     onDone?.();
   }
 
@@ -90,6 +99,47 @@ export function Settings({ onDone, embedded }: Props) {
           <p className="text-xs text-neutral-500">
             Default: <code className="text-neutral-400">{window.location.origin}/</code>
           </p>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+          <div>
+            <div className="text-sm font-medium text-neutral-300">LLM (chat summaries)</div>
+            <p className="mt-1 text-xs text-neutral-500">
+              OpenAI key, or any OpenAI-compatible endpoint (LM Studio, Ollama, OpenRouter, Together, etc.).
+              Stored in localStorage only.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-neutral-400">API key</label>
+            <input
+              type="password"
+              autoComplete="off"
+              value={llmApiKey}
+              onChange={(e) => setLlmApiKey(e.target.value)}
+              placeholder="sk-…"
+              className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+            />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-neutral-400">Base URL</label>
+              <input
+                value={llmBaseUrl}
+                onChange={(e) => setLlmBaseUrl(e.target.value)}
+                placeholder="https://api.openai.com/v1"
+                className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-neutral-400">Model</label>
+              <input
+                value={llmModel}
+                onChange={(e) => setLlmModel(e.target.value)}
+                placeholder="gpt-4o-mini"
+                className="w-44 rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
