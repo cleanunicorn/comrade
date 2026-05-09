@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import tmi from "tmi.js";
-import { useAuth } from "../auth/AuthContext";
-import { useSettings } from "../settings/SettingsContext";
+import { useAuth } from "../auth/useAuth";
+import { useSettings } from "../settings/useSettings";
 import { helix } from "./helix";
 import { fetch7tvChannel, fetch7tvGlobal, type SevenTvEmote } from "./sevenTv";
 
@@ -106,13 +106,15 @@ export function useChatImpl(channel?: string) {
 
     const cached = loadCache(targetChannel);
     if (cached.length > 0) {
-      setMessages((prev) => {
-        const seen = new Set(prev.map((m) => m.id));
-        const merged = [...cached.filter((c) => !seen.has(c.id)), ...prev];
-        merged.sort((a, b) => a.ts - b.ts);
-        if (merged.length > MAX_MESSAGES) merged.splice(0, merged.length - MAX_MESSAGES);
-        return merged;
-      });
+      window.setTimeout(() => {
+        setMessages((prev) => {
+          const seen = new Set(prev.map((m) => m.id));
+          const merged = [...cached.filter((c) => !seen.has(c.id)), ...prev];
+          merged.sort((a, b) => a.ts - b.ts);
+          if (merged.length > MAX_MESSAGES) merged.splice(0, merged.length - MAX_MESSAGES);
+          return merged;
+        });
+      }, 0);
     }
 
     client.on("message", (ch, tags, text, _self) => {

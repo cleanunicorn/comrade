@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useChat } from "../twitch/ChatContext";
+import { useChat } from "../twitch/useChatContext";
 import { type ChatMessage } from "../twitch/useChat";
 import { emoteUrl, type SevenTvEmote } from "../twitch/sevenTv";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 
 function renderTextWith7tv(

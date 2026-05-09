@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../auth/AuthContext";
-import { useSettings } from "../settings/SettingsContext";
+import { useAuth } from "../auth/useAuth";
+import { useSettings } from "../settings/useSettings";
 import { helix, type Stream } from "./helix";
 
 export function useStreamInfo(pollMs = 30_000) {

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   clearAuth,
   loadToken,
@@ -12,18 +12,8 @@ import {
   type TwitchUser,
 } from "./twitchAuth";
 import { helix } from "../twitch/helix";
-import { useSettings } from "../settings/SettingsContext";
-
-interface AuthState {
-  token: TwitchToken | null;
-  user: TwitchUser | null;
-  loading: boolean;
-  error: string | null;
-  login: () => void;
-  logout: () => void;
-}
-
-const Ctx = createContext<AuthState | null>(null);
+import { AuthCtx, type AuthState } from "./authContextValue";
+import { useSettings } from "../settings/useSettings";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { settings, ready } = useSettings();
@@ -33,10 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!ready) {
-      setLoading(false);
-      return;
-    }
+    if (!ready) return;
     (async () => {
       try {
         let t = parseFragment();
@@ -93,11 +80,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [token, user, loading, error, login, logout],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useAuth(): AuthState {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("useAuth outside provider");
-  return v;
+  return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }

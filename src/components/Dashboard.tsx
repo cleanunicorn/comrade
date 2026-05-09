@@ -1,4 +1,4 @@
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import { ChatProvider } from "../twitch/ChatContext";
 import { CamPanel } from "./CamPanel";
 import { ChatPanel } from "./ChatPanel";

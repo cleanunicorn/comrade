@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { downloadExport, exportAll, importAll, readJsonFile } from "../settings/exportImport";
 
 interface Props {

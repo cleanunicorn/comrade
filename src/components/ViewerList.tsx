@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useViewers, type ViewerEntry } from "../twitch/useViewers";
-import { useChat } from "../twitch/ChatContext";
-import { useSettings } from "../settings/SettingsContext";
+import { useChat } from "../twitch/useChatContext";
+import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 
 type Filter = "all" | "following" | "not" | "muted";
@@ -26,6 +26,12 @@ export function ViewerList() {
   const { messages } = useChat();
   const { settings, update } = useSettings();
   const [filter, setFilter] = useState<Filter>("all");
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const merged = useMemo<MergedViewer[]>(() => {
     const byLogin = new Map<string, MergedViewer>();
@@ -101,7 +107,7 @@ export function ViewerList() {
             type="button"
             onClick={refresh}
             disabled={loading}
-            title={lastFetchAt ? `Updated ${formatAge(Date.now() - lastFetchAt)} ago` : "Refresh"}
+            title={lastFetchAt ? `Updated ${formatAge(now - lastFetchAt)} ago` : "Refresh"}
             className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
           >
             {loading ? "…" : "↻"}

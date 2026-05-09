@@ -1,21 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_SETTINGS, hasRequiredSettings, loadSettings, saveSettings, type Settings } from "./store";
-
-interface SettingsState {
-  settings: Settings;
-  ready: boolean;
-  update: (patch: Partial<Settings>) => void;
-  reset: () => void;
-}
-
-const Ctx = createContext<SettingsState | null>(null);
+import { SettingsCtx, type SettingsState } from "./settingsContextValue";
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
+  const [settings, setSettings] = useState<Settings>(() => loadSettings());
 
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings((s) => {
@@ -35,11 +23,5 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [settings, update, reset],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useSettings(): SettingsState {
-  const v = useContext(Ctx);
-  if (!v) throw new Error("useSettings outside provider");
-  return v;
+  return <SettingsCtx.Provider value={value}>{children}</SettingsCtx.Provider>;
 }

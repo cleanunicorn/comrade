@@ -1,5 +1,5 @@
 import { useStreamInfo } from "../twitch/useStreamInfo";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 
 function fmtUptime(startedAt: string): string {
