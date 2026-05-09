@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { useChat } from "../twitch/ChatContext";
+import { useChat } from "../twitch/useChatContext";
 import { useStreamInfo } from "../twitch/useStreamInfo";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { chatCompletion } from "../llm/openai";
 import { FontSizer } from "./FontSizer";
 
@@ -19,6 +19,12 @@ export function ChatSummary() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const cutoffTs = stream ? new Date(stream.started_at).getTime() : 0;
   const filtered = useMemo(() => {
@@ -119,8 +125,7 @@ export function ChatSummary() {
       settings.chatPostWindowMinutes,
       filtered,
       transcript,
-      stream?.game_name,
-      stream?.title,
+      stream,
       send,
       status.connected,
     ],
@@ -252,7 +257,7 @@ export function ChatSummary() {
           : `Stream offline · using all ${filtered.length} cached messages`}
         {generatedAt && (
           <span className="ml-2">
-            · generated {Math.floor((Date.now() - generatedAt) / 1000)}s ago
+            · generated {Math.floor((now - generatedAt) / 1000)}s ago
           </span>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
-import { useSettings } from "../settings/SettingsContext";
-import { downloadExport, importAll, readJsonFile } from "../settings/exportImport";
+import { useSettings } from "../settings/useSettings";
+import { downloadExport, exportAll, importAll, readJsonFile } from "../settings/exportImport";
 
 interface Props {
   onDone?: () => void;
@@ -14,7 +14,7 @@ export function Settings({ onDone, embedded }: Props) {
   const [llmApiKey, setLlmApiKey] = useState(settings.llmApiKey);
   const [llmBaseUrl, setLlmBaseUrl] = useState(settings.llmBaseUrl);
   const [llmModel, setLlmModel] = useState(settings.llmModel);
-  const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [backupMsg, setBackupMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   function save(e: React.FormEvent) {
@@ -29,23 +29,58 @@ export function Settings({ onDone, embedded }: Props) {
     onDone?.();
   }
 
+  function importBundle(bundle: unknown) {
+    const wipe = window.confirm(
+      "Wipe existing Comrade data before importing?\n\nOK = wipe + import (clean replace)\nCancel = merge (keys in file overwrite, others kept)",
+    );
+    const res = importAll(bundle, { wipeExisting: wipe });
+    if (!res.ok) {
+      setBackupMsg({ kind: "err", text: res.error ?? "Import failed" });
+      return;
+    }
+    setBackupMsg({ kind: "ok", text: `Imported ${res.imported} keys. Reloading…` });
+    setTimeout(() => window.location.reload(), 600);
+  }
+
+  async function copySettingsToClipboard() {
+    if (!navigator.clipboard?.writeText) {
+      setBackupMsg({ kind: "err", text: "Clipboard copy is not available in this browser." });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(exportAll(), null, 2));
+      setBackupMsg({ kind: "ok", text: "Copied settings export to clipboard." });
+    } catch (err) {
+      setBackupMsg({ kind: "err", text: `Copy failed: ${String(err)}` });
+    }
+  }
+
+  async function pasteSettingsFromClipboard() {
+    if (!navigator.clipboard?.readText) {
+      setBackupMsg({ kind: "err", text: "Clipboard paste is not available in this browser." });
+      return;
+    }
+
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        setBackupMsg({ kind: "err", text: "Clipboard is empty." });
+        return;
+      }
+      importBundle(JSON.parse(text));
+    } catch (err) {
+      setBackupMsg({ kind: "err", text: `Paste import failed: ${String(err)}` });
+    }
+  }
+
   async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const json = await readJsonFile(file);
-      const wipe = window.confirm(
-        "Wipe existing Comrade data before importing?\n\nOK = wipe + import (clean replace)\nCancel = merge (keys in file overwrite, others kept)",
-      );
-      const res = importAll(json, { wipeExisting: wipe });
-      if (!res.ok) {
-        setImportMsg({ kind: "err", text: res.error ?? "Import failed" });
-        return;
-      }
-      setImportMsg({ kind: "ok", text: `Imported ${res.imported} keys. Reloading…` });
-      setTimeout(() => window.location.reload(), 600);
+      importBundle(await readJsonFile(file));
     } catch (err) {
-      setImportMsg({ kind: "err", text: String(err) });
+      setBackupMsg({ kind: "err", text: String(err) });
     } finally {
       if (fileRef.current) fileRef.current.value = "";
     }
@@ -150,17 +185,31 @@ export function Settings({ onDone, embedded }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
+              onClick={copySettingsToClipboard}
+              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
+            >
+              Copy settings
+            </button>
+            <button
+              type="button"
+              onClick={pasteSettingsFromClipboard}
+              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
+            >
+              Paste settings
+            </button>
+            <button
+              type="button"
               onClick={downloadExport}
               className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
             >
-              Export JSON
+              Download JSON
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
               className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
             >
-              Import JSON
+              Import file
             </button>
             <input
               ref={fileRef}
@@ -170,9 +219,9 @@ export function Settings({ onDone, embedded }: Props) {
               className="hidden"
             />
           </div>
-          {importMsg && (
-            <div className={`text-xs ${importMsg.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
-              {importMsg.text}
+          {backupMsg && (
+            <div className={`text-xs ${backupMsg.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+              {backupMsg.text}
             </div>
           )}
         </div>

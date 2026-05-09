@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "../auth/AuthContext";
-import { useSettings } from "../settings/SettingsContext";
+import { useAuth } from "../auth/useAuth";
+import { useSettings } from "../settings/useSettings";
 import { helix, type Chatter } from "./helix";
 
 export interface ViewerEntry extends Chatter {

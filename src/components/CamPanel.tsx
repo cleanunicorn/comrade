@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMedia } from "../media/useMedia";
 import { useDevices } from "../media/useDevices";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 
 export function CamPanel() {
@@ -13,48 +13,52 @@ export function CamPanel() {
     videoDeviceId: settings.videoDeviceId || undefined,
     audioDeviceId: settings.audioDeviceId || undefined,
   });
+  const { active, audioLevel, start, stop, stream } = media;
   const bothDisabled = !settings.enableAudio && !settings.enableVideo;
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
-    if (videoRef.current && media.stream) {
-      videoRef.current.srcObject = media.stream;
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
     }
-  }, [media.stream]);
+  }, [stream]);
 
   useEffect(() => {
-    if (media.active) {
-      media.stop();
+    if (active) {
+      stop();
       if (bothDisabled) return;
-      const t = setTimeout(() => media.start(), 50);
+      const t = setTimeout(() => start(), 50);
       return () => clearTimeout(t);
     }
-  }, [settings.videoDeviceId, settings.audioDeviceId, settings.enableVideo, settings.enableAudio, bothDisabled]);
+  }, [settings.videoDeviceId, settings.audioDeviceId, settings.enableVideo, settings.enableAudio, bothDisabled, active, start, stop]);
 
   const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (settings.autoStartMedia && !autoStartedRef.current && !media.active && !bothDisabled) {
+    if (settings.autoStartMedia && !autoStartedRef.current && !active && !bothDisabled) {
       autoStartedRef.current = true;
-      media.start();
+      start();
     }
-  }, [settings.autoStartMedia, media.active, media.start]);
+  }, [settings.autoStartMedia, active, start, bothDisabled]);
 
   const SCALE = 400;
-  const levelPct = Math.min(100, Math.round(media.audioLevel * SCALE));
+  const levelPct = Math.min(100, Math.round(audioLevel * SCALE));
   const thresholdPct = Math.min(100, Math.round(settings.speakThreshold * SCALE));
 
   const [lastSpokeAt, setLastSpokeAt] = useState<number | null>(null);
   useEffect(() => {
-    if (media.active && media.audioLevel > settings.speakThreshold) {
-      setLastSpokeAt(Date.now());
-    }
-  }, [media.audioLevel, media.active, settings.speakThreshold]);
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      if (cancelled) return;
+      if (!active) setLastSpokeAt(null);
+      else if (audioLevel > settings.speakThreshold) setLastSpokeAt(Date.now());
+    }, 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [audioLevel, active, settings.speakThreshold]);
 
-  useEffect(() => {
-    if (!media.active) setLastSpokeAt(null);
-  }, [media.active]);
-
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
@@ -62,7 +66,7 @@ export function CamPanel() {
 
   const silentMs = lastSpokeAt ? now - lastSpokeAt : null;
   const nudgeMs = settings.silenceNudgeSeconds * 1000;
-  const shouldNudge = media.active && silentMs != null && silentMs >= nudgeMs;
+  const shouldNudge = active && silentMs != null && silentMs >= nudgeMs;
 
   const prevNudgeRef = useRef(false);
   useEffect(() => {
@@ -92,13 +96,13 @@ export function CamPanel() {
             />
             Auto-start
           </label>
-          {media.active ? (
-            <button onClick={media.stop} className="rounded bg-red-600 px-3 py-1 text-xs font-semibold hover:bg-red-500">
+          {active ? (
+            <button onClick={stop} className="rounded bg-red-600 px-3 py-1 text-xs font-semibold hover:bg-red-500">
               Stop
             </button>
           ) : (
             <button
-              onClick={media.start}
+              onClick={start}
               disabled={bothDisabled}
               title={bothDisabled ? "Enable cam or mic first" : ""}
               className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600"
@@ -111,7 +115,7 @@ export function CamPanel() {
 
       <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
         <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
-        {!media.active && (
+        {!active && (
           <div className="absolute inset-0 flex items-center justify-center text-neutral-500">
             Camera off
           </div>
@@ -178,7 +182,7 @@ export function CamPanel() {
         <span className="text-neutral-400">
           {lastSpokeAt
             ? `Last spoke ${formatDuration(silentMs!)} ago`
-            : media.active
+            : active
               ? "Waiting to detect speech…"
               : "Mic off"}
         </span>
