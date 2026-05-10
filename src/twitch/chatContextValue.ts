@@ -7,6 +7,19 @@ export interface ChatContextValue {
   status: ChatStatus;
   send: (text: string) => void;
   sevenTvEmotes: Record<string, SevenTvEmote>;
+  canModerate: boolean;
+  deletedIds: Set<string>;
+  bannedUsers: Set<string>;
+  blockedUserIds: Set<string>;
+  deleteMessage: (messageId: string) => Promise<void>;
+  banUser: (
+    targetUserId: string,
+    login: string,
+    durationSec?: number,
+    reason?: string,
+  ) => Promise<void>;
+  blockUser: (targetUserId: string) => Promise<void>;
+  actionError: string | null;
 }
 
 export const ChatCtx = createContext<ChatContextValue | null>(null);

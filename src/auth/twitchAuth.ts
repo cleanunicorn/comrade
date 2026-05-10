@@ -23,7 +23,14 @@ export const TWITCH_SCOPES = [
   "moderator:read:chatters",
   "channel:read:redemptions",
   "bits:read",
+  "moderator:manage:chat_messages",
+  "moderator:manage:banned_users",
+  "user:manage:blocked_users",
 ];
+
+export function hasRequiredScopes(scopes: string[]): boolean {
+  return TWITCH_SCOPES.every((s) => scopes.includes(s));
+}
 
 export function loadToken(): TwitchToken | null {
   const raw = localStorage.getItem(TOKEN_KEY);
