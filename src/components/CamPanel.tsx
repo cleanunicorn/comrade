@@ -23,14 +23,26 @@ export function CamPanel() {
     }
   }, [stream]);
 
+  const activeRef = useRef(active);
   useEffect(() => {
-    if (active) {
-      stop();
-      if (bothDisabled) return;
-      const t = setTimeout(() => start(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [settings.videoDeviceId, settings.audioDeviceId, settings.enableVideo, settings.enableAudio, bothDisabled, active, start, stop]);
+    activeRef.current = active;
+  }, [active]);
+  const startRef = useRef(start);
+  const stopRef = useRef(stop);
+  useEffect(() => {
+    startRef.current = start;
+    stopRef.current = stop;
+  }, [start, stop]);
+
+  useEffect(() => {
+    if (!activeRef.current) return;
+    stopRef.current();
+    if (bothDisabled) return;
+    const t = setTimeout(() => {
+      void startRef.current();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [settings.videoDeviceId, settings.audioDeviceId, settings.enableVideo, settings.enableAudio, bothDisabled]);
 
   const autoStartedRef = useRef(false);
   useEffect(() => {
