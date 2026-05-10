@@ -7,6 +7,7 @@ import { useAuth } from "../auth/useAuth";
 import { FontSizer } from "./FontSizer";
 import { ChatMessageActions } from "./ChatMessageActions";
 import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 function renderTextWith7tv(
   text: string,
@@ -111,18 +112,23 @@ export function ChatPanel() {
     setDraft("");
   }
 
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={fontSize} onChange={(n) => update({ chatFontSize: n })} />
+      </Row>
+    </PanelMenu>
+  );
+
   const controls = (
-    <>
-      <FontSizer value={fontSize} onChange={(n) => update({ chatFontSize: n })} />
-      <span className={`sw-accent text-[10px] ${status.connected ? "text-[var(--sw-success)]" : "text-[var(--sw-text-faint)]"}`}>
-        <span className={`sw-dot ${status.connected ? "live" : ""}`} />
-        {status.connected ? "Live" : "Offline"}
-      </span>
-    </>
+    <span className={`sw-accent text-[10px] ${status.connected ? "text-[var(--sw-success)]" : "text-[var(--sw-text-faint)]"}`}>
+      <span className={`sw-dot ${status.connected ? "live" : ""}`} />
+      {status.connected ? "Live" : "Offline"}
+    </span>
   );
 
   return (
-    <PanelFrame title="▌ Chat" controls={controls} flush>
+    <PanelFrame title="▌ Chat" menu={menu} controls={controls} flush>
       <div className="flex h-full min-h-0 flex-col">
         <div
           ref={scrollRef}

@@ -4,6 +4,7 @@ import { useChat } from "../twitch/useChatContext";
 import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 type Filter = "all" | "following" | "not" | "muted";
 
@@ -91,27 +92,33 @@ export function ViewerList() {
           ? merged.filter((v) => v.isMuted)
           : merged.filter((v) => !v.follows && !v.isMuted);
 
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer
+          value={settings.viewersFontSize}
+          onChange={(n) => update({ viewersFontSize: n })}
+        />
+      </Row>
+    </PanelMenu>
+  );
+
   const controls = (
-    <>
-      <FontSizer
-        value={settings.viewersFontSize}
-        onChange={(n) => update({ viewersFontSize: n })}
-      />
-      <button
-        type="button"
-        onClick={refresh}
-        disabled={loading}
-        title={lastFetchAt ? `Updated ${formatAge(now - lastFetchAt)} ago` : "Refresh"}
-        className="btn btn-ghost btn-sm"
-      >
-        {loading ? "…" : "↻"}
-      </button>
-    </>
+    <button
+      type="button"
+      onClick={refresh}
+      disabled={loading}
+      title={lastFetchAt ? `Updated ${formatAge(now - lastFetchAt)} ago` : "Refresh"}
+      className="btn btn-ghost btn-sm"
+    >
+      {loading ? "…" : "↻"}
+    </button>
   );
 
   return (
     <PanelFrame
       title={`▌ Viewers${total > 0 ? ` · ${total}` : ""}`}
+      menu={menu}
       controls={controls}
       flush
     >

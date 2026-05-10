@@ -2,6 +2,7 @@ import { useStreamInfo } from "../twitch/useStreamInfo";
 import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 function fmtUptime(startedAt: string): string {
   const ms = Date.now() - new Date(startedAt).getTime();
@@ -19,7 +20,13 @@ export function StreamStats() {
   return (
     <PanelFrame
       title="▌ Stream"
-      controls={<FontSizer value={fontSize} onChange={(n) => update({ statsFontSize: n })} />}
+      menu={
+        <PanelMenu>
+          <Row label="Font">
+            <FontSizer value={fontSize} onChange={(n) => update({ statsFontSize: n })} />
+          </Row>
+        </PanelMenu>
+      }
     >
       <div style={{ fontSize: `${fontSize}px` }}>
         {!stream ? (

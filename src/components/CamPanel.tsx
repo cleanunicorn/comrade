@@ -4,6 +4,7 @@ import { useDevices } from "../media/useDevices";
 import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
 import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 export function CamPanel() {
   const { settings, update } = useSettings();
@@ -89,35 +90,37 @@ export function CamPanel() {
     prevNudgeRef.current = shouldNudge;
   }, [shouldNudge, settings.nudgeCount, update]);
 
-  const controls = (
-    <>
-      <FontSizer value={settings.camFontSize} onChange={(n) => update({ camFontSize: n })} />
-      <label className="sw-accent flex cursor-pointer items-center gap-1.5 text-[10px] text-[var(--sw-text-dim)] select-none">
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={settings.camFontSize} onChange={(n) => update({ camFontSize: n })} />
+      </Row>
+      <Row label="Auto-start">
         <input
           type="checkbox"
           checked={settings.autoStartMedia}
           onChange={(e) => update({ autoStartMedia: e.target.checked })}
           className="sw-checkbox h-3.5 w-3.5"
         />
-        Auto
-      </label>
-      {active ? (
-        <button onClick={stop} className="btn btn-danger btn-sm">■ Stop</button>
-      ) : (
-        <button
-          onClick={start}
-          disabled={bothDisabled}
-          title={bothDisabled ? "Enable cam or mic first" : ""}
-          className="btn btn-success btn-sm"
-        >
-          ▶ Start
-        </button>
-      )}
-    </>
+      </Row>
+    </PanelMenu>
+  );
+
+  const controls = active ? (
+    <button onClick={stop} className="btn btn-danger btn-sm">■ Stop</button>
+  ) : (
+    <button
+      onClick={start}
+      disabled={bothDisabled}
+      title={bothDisabled ? "Enable cam or mic first" : ""}
+      className="btn btn-success btn-sm"
+    >
+      ▶ Start
+    </button>
   );
 
   return (
-    <PanelFrame title="▌ Cam ∙ Mic" controls={controls}>
+    <PanelFrame title="▌ Cam ∙ Mic" menu={menu} controls={controls}>
       <div className="flex flex-col gap-3" style={{ fontSize: `${settings.camFontSize}px` }}>
         <div className="relative aspect-video overflow-hidden rounded-sm border border-[rgba(0,240,255,0.35)] bg-black shadow-[0_0_16px_rgba(0,240,255,0.25)]">
           <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />

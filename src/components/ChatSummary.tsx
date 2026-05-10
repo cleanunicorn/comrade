@@ -6,6 +6,7 @@ import { useSettings } from "../settings/useSettings";
 import { chatCompletion } from "../llm/openai";
 import { FontSizer } from "./FontSizer";
 import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 const MAX_MESSAGES = 400;
 const MAX_CHARS = 12_000;
@@ -162,11 +163,12 @@ export function ChatSummary() {
     navigator.clipboard.writeText(summary).catch(() => {});
   }
 
-  const controls = (
-    <>
-      <FontSizer value={settings.summaryFontSize} onChange={(n) => update({ summaryFontSize: n })} />
-      <label className="sw-accent flex items-center gap-1 text-[9px] text-[var(--sw-text-dim)]" title="Panel auto-refresh, 0 = off">
-        Auto
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={settings.summaryFontSize} onChange={(n) => update({ summaryFontSize: n })} />
+      </Row>
+      <Row label="Auto (min)">
         <input
           type="number"
           min={0}
@@ -175,12 +177,11 @@ export function ChatSummary() {
           onChange={(e) =>
             update({ summaryAutoMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))) })
           }
-          className="sw-input w-12 text-right text-[10px]"
+          className="sw-input w-14 text-right text-xs"
+          title="Panel auto-refresh, 0 = off"
         />
-        m
-      </label>
-      <label className="sw-accent flex items-center gap-1 text-[9px] text-[var(--sw-text-dim)]" title="Auto-post short summary, 0 = off">
-        Post
+      </Row>
+      <Row label="Post (min)">
         <input
           type="number"
           min={0}
@@ -189,12 +190,11 @@ export function ChatSummary() {
           onChange={(e) =>
             update({ chatPostSummaryMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))) })
           }
-          className="sw-input w-12 text-right text-[10px]"
+          className="sw-input w-14 text-right text-xs"
+          title="Auto-post short summary, 0 = off"
         />
-        m
-      </label>
-      <label className="sw-accent flex items-center gap-1 text-[9px] text-[var(--sw-text-dim)]" title="Window minutes">
-        Win
+      </Row>
+      <Row label="Window (min)">
         <input
           type="number"
           min={1}
@@ -203,10 +203,15 @@ export function ChatSummary() {
           onChange={(e) =>
             update({ chatPostWindowMinutes: Math.max(1, Math.min(120, parseInt(e.target.value || "1", 10))) })
           }
-          className="sw-input w-12 text-right text-[10px]"
+          className="sw-input w-14 text-right text-xs"
+          title="Window minutes"
         />
-        m
-      </label>
+      </Row>
+    </PanelMenu>
+  );
+
+  const controls = (
+    <>
       {summary && (
         <button type="button" onClick={copy} className="btn btn-ghost btn-sm">Copy</button>
       )}
@@ -231,7 +236,7 @@ export function ChatSummary() {
   );
 
   return (
-    <PanelFrame title="▌ Chat Summary" controls={controls}>
+    <PanelFrame title="▌ Chat Summary" menu={menu} controls={controls}>
       <div className="mb-2 sw-mono text-[10px] text-[var(--sw-text-faint)]">
         {stream
           ? <>Since stream start · <span className="sw-num text-[var(--sw-cyan)]">{filtered.length}</span> msgs</>
