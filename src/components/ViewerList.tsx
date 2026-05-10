@@ -3,6 +3,8 @@ import { useViewers, type ViewerEntry } from "../twitch/useViewers";
 import { useChat } from "../twitch/useChatContext";
 import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
+import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 type Filter = "all" | "following" | "not" | "muted";
 
@@ -90,70 +92,80 @@ export function ViewerList() {
           ? merged.filter((v) => v.isMuted)
           : merged.filter((v) => !v.follows && !v.isMuted);
 
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer
+          value={settings.viewersFontSize}
+          onChange={(n) => update({ viewersFontSize: n })}
+        />
+      </Row>
+    </PanelMenu>
+  );
+
+  const controls = (
+    <button
+      type="button"
+      onClick={refresh}
+      disabled={loading}
+      title={lastFetchAt ? `Updated ${formatAge(now - lastFetchAt)} ago` : "Refresh"}
+      className="btn btn-ghost btn-sm"
+    >
+      {loading ? "…" : "↻"}
+    </button>
+  );
+
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
-      <div className="flex flex-col gap-2 border-b border-neutral-800 p-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
-              Viewers {total > 0 && <span className="text-neutral-500">({total})</span>}
-            </h2>
-            <FontSizer
-              value={settings.viewersFontSize}
-              onChange={(n) => update({ viewersFontSize: n })}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={loading}
-            title={lastFetchAt ? `Updated ${formatAge(now - lastFetchAt)} ago` : "Refresh"}
-            className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
-          >
-            {loading ? "…" : "↻"}
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-1 text-[10px]">
+    <PanelFrame
+      title={`▌ Viewers${total > 0 ? ` · ${total}` : ""}`}
+      menu={menu}
+      controls={controls}
+      flush
+    >
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="flex flex-wrap gap-1 border-b border-[rgba(0,240,255,0.20)] p-2">
           <FilterBtn active={filter === "all"} onClick={() => setFilter("all")}>
             All {merged.length}
           </FilterBtn>
           <FilterBtn active={filter === "following"} onClick={() => setFilter("following")}>
-            ❤️ {followCount}
+            ❤ {followCount}
           </FilterBtn>
           <FilterBtn active={filter === "not"} onClick={() => setFilter("not")}>
-            👁️ {notCount}
+            👁 {notCount}
           </FilterBtn>
           <FilterBtn active={filter === "muted"} onClick={() => setFilter("muted")}>
             🔇 {mutedCount}
           </FilterBtn>
         </div>
+        <div className="flex-1 overflow-y-auto p-2" style={{ fontSize: `${settings.viewersFontSize}px` }}>
+          {!loaded && <div className="p-2 sw-mono text-[var(--sw-text-faint)]">Loading…</div>}
+          {loaded && shown.length === 0 && <div className="p-2 sw-mono text-[var(--sw-text-faint)]">No viewers</div>}
+          <ul className="space-y-0.5">
+            {shown.map((v) => {
+              const { emoji, title } = pickEmoji(v);
+              return (
+                <li
+                  key={v.user_id}
+                  className="flex items-center gap-2 rounded px-2 py-1 hover:bg-[rgba(255,32,121,0.10)]"
+                >
+                  <span title={title} className="shrink-0 text-sm leading-none">
+                    {emoji}
+                  </span>
+                  <span className={`truncate ${v.isMuted ? "italic text-[var(--sw-text-faint)]" : "text-[var(--sw-text)]"}`}>
+                    {v.user_name}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        {error && (
+          <div className="border-t border-[rgba(255,56,89,0.4)] p-2 text-[10px] text-[var(--sw-danger)] sw-mono">
+            {error}
+          </div>
+        )}
       </div>
-
-      <div className="flex-1 overflow-y-auto p-2" style={{ fontSize: `${settings.viewersFontSize}px` }}>
-        {!loaded && <div className="p-2 text-neutral-500">Loading…</div>}
-        {loaded && shown.length === 0 && <div className="p-2 text-neutral-500">No viewers</div>}
-        <ul className="space-y-0.5">
-          {shown.map((v) => {
-            const { emoji, title } = pickEmoji(v);
-            return (
-              <li
-                key={v.user_id}
-                className="flex items-center gap-2 rounded px-2 py-1 hover:bg-neutral-800/50"
-              >
-                <span title={title} className="shrink-0 text-sm leading-none">
-                  {emoji}
-                </span>
-                <span className={`truncate ${v.isMuted ? "text-neutral-400 italic" : "text-neutral-200"}`}>
-                  {v.user_name}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {error && <div className="border-t border-neutral-800 p-2 text-[10px] text-red-400">{error}</div>}
-    </div>
+    </PanelFrame>
   );
 }
 
@@ -174,15 +186,7 @@ function FilterBtn({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center gap-0.5 rounded border px-2 py-0.5 ${
-        active
-          ? "border-violet-500 bg-violet-600/20 text-violet-200"
-          : "border-neutral-700 text-neutral-400 hover:bg-neutral-800"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`sw-chip ${active ? "is-active" : ""}`}>
       {children}
     </button>
   );

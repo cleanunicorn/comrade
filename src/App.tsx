@@ -18,10 +18,16 @@ function Shell() {
   if (showSettings) return <Settings onDone={() => setShowSettings(false)} />;
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center text-neutral-400">Loading…</div>;
+    return (
+      <div className="flex h-full items-center justify-center sw-accent text-[var(--sw-cyan)]">
+        ▒▒ Loading ▒▒
+      </div>
+    );
   }
   if (error) {
-    return <div className="flex h-full items-center justify-center text-red-400">{error}</div>;
+    return (
+      <div className="flex h-full items-center justify-center sw-mono text-[var(--sw-danger)]">{error}</div>
+    );
   }
 
   return token && user ? (

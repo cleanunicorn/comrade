@@ -36,7 +36,7 @@ export function ChatMessageActions({ username, onDelete, onTimeout, onBan, onBlo
           type="button"
           title="Timeout 10m"
           onClick={() => onTimeout(600)}
-          className="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
+          className="rounded p-1 text-[var(--sw-text-dim)] hover:bg-[rgba(255,32,121,0.20)] hover:text-white"
         >
           <ClockIcon />
         </button>
@@ -49,7 +49,7 @@ export function ChatMessageActions({ username, onDelete, onTimeout, onBan, onBlo
           ▾
         </button>
         {openMenu === "timeout" && (
-          <div className="absolute right-0 top-full z-10 mt-1 flex flex-col rounded border border-neutral-700 bg-neutral-900 text-xs shadow-lg">
+          <div className="absolute right-0 top-full z-10 mt-1 flex flex-col rounded-sm border border-[rgba(0,240,255,0.35)] bg-[rgba(7,0,15,0.95)] backdrop-blur text-xs shadow-lg">
             {TIMEOUT_PRESETS.map((p) => (
               <button
                 key={p.sec}
@@ -58,7 +58,7 @@ export function ChatMessageActions({ username, onDelete, onTimeout, onBan, onBlo
                   onTimeout(p.sec);
                   close();
                 }}
-                className="px-3 py-1 text-left hover:bg-neutral-800"
+                className="px-3 py-1 text-left text-[var(--sw-text)] hover:bg-[rgba(255,32,121,0.20)]"
               >
                 {p.label}
               </button>
@@ -83,7 +83,7 @@ export function ChatMessageActions({ username, onDelete, onTimeout, onBan, onBlo
               value={banReason}
               onChange={(e) => setBanReason(e.target.value)}
               placeholder="Reason (optional)"
-              className="w-full rounded bg-neutral-800 px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-violet-500"
+              className="sw-input w-full text-xs"
             />
           }
           onCancel={close}
@@ -123,7 +123,7 @@ function IconBtn({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-100"
+      className="rounded p-1 text-[var(--sw-text-dim)] hover:bg-[rgba(255,32,121,0.20)] hover:text-white"
     >
       {children}
     </button>
@@ -142,22 +142,14 @@ function ConfirmPopover({
   onConfirm: () => void;
 }) {
   return (
-    <div className="absolute right-0 top-full z-20 mt-1 w-64 rounded border border-neutral-700 bg-neutral-900 p-3 shadow-lg">
-      <div className="mb-2 text-xs text-neutral-200">{title}</div>
+    <div className="absolute right-0 top-full z-20 mt-1 w-64 rounded-sm border border-[rgba(0,240,255,0.35)] bg-[rgba(7,0,15,0.95)] backdrop-blur p-3 shadow-lg">
+      <div className="mb-2 sw-mono text-xs text-[var(--sw-text)]">{title}</div>
       {extra && <div className="mb-2">{extra}</div>}
       <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded bg-neutral-800 px-2 py-1 text-xs hover:bg-neutral-700"
-        >
+        <button type="button" onClick={onCancel} className="btn btn-ghost btn-sm">
           Cancel
         </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className="rounded bg-red-600 px-2 py-1 text-xs font-semibold hover:bg-red-500"
-        >
+        <button type="button" onClick={onConfirm} className="btn btn-danger btn-sm">
           Confirm
         </button>
       </div>

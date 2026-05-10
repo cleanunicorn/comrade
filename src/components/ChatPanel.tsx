@@ -6,6 +6,8 @@ import { useSettings } from "../settings/useSettings";
 import { useAuth } from "../auth/useAuth";
 import { FontSizer } from "./FontSizer";
 import { ChatMessageActions } from "./ChatMessageActions";
+import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 function renderTextWith7tv(
   text: string,
@@ -110,77 +112,83 @@ export function ChatPanel() {
     setDraft("");
   }
 
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={fontSize} onChange={(n) => update({ chatFontSize: n })} />
+      </Row>
+    </PanelMenu>
+  );
+
+  const controls = (
+    <span className={`sw-accent text-[10px] ${status.connected ? "text-[var(--sw-success)]" : "text-[var(--sw-text-faint)]"}`}>
+      <span className={`sw-dot ${status.connected ? "live" : ""}`} />
+      {status.connected ? "Live" : "Offline"}
+    </span>
+  );
+
   return (
-    <div className="flex h-full flex-col rounded-xl border border-neutral-800 bg-neutral-900/40">
-      <div className="flex items-center justify-between gap-2 border-b border-neutral-800 p-3">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Chat</h2>
-          <FontSizer value={fontSize} onChange={(n) => update({ chatFontSize: n })} />
-        </div>
-        <span className={`text-xs ${status.connected ? "text-emerald-400" : "text-neutral-500"}`}>
-          {status.connected ? "● live" : "○ disconnected"}
-        </span>
-      </div>
-
-      <div
-        ref={scrollRef}
-        className="flex-1 space-y-1 overflow-y-auto p-3"
-        style={{ fontSize: `${fontSize}px` }}
-      >
-        {visibleMessages.length === 0 && (
-          <div className="text-neutral-500">Waiting for messages…</div>
-        )}
-        {visibleMessages.map((m) => {
-          const isSelf = !!user && m.username === user.login.toLowerCase();
-          const showActions = canModerate && !isSelf && !m.isBroadcaster;
-          return (
-            <div
-              key={m.id}
-              className="group flex items-start justify-between gap-2 break-words"
-            >
-              <div className="min-w-0 flex-1">
-                <span className="font-semibold" style={{ color: m.color || "#bf94ff" }}>
-                  {m.isBroadcaster && "👑 "}
-                  {m.isMod && "🛡 "}
-                  {m.displayName}
-                </span>
-                <span className="text-neutral-300">: {renderMessage(m, sevenTvEmotes)}</span>
-              </div>
-              {showActions && (
-                <ChatMessageActions
-                  username={m.username}
-                  onDelete={() => void deleteMessage(m.id)}
-                  onTimeout={(sec) => void banUser(m.userId, m.username, sec)}
-                  onBan={(reason) => void banUser(m.userId, m.username, undefined, reason)}
-                  onBlock={() => void blockUser(m.userId)}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <form onSubmit={onSubmit} className="flex gap-2 border-t border-neutral-800 p-3">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Send to chat…"
-          className="flex-1 rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
-        />
-        <button
-          type="submit"
-          disabled={!status.connected}
-          className="rounded bg-violet-600 px-3 py-2 text-sm font-semibold disabled:opacity-50 hover:bg-violet-500"
+    <PanelFrame title="▌ Chat" menu={menu} controls={controls} flush>
+      <div className="flex h-full min-h-0 flex-col">
+        <div
+          ref={scrollRef}
+          className="flex-1 space-y-1 overflow-y-auto p-3"
+          style={{ fontSize: `${fontSize}px` }}
         >
-          Send
-        </button>
-      </form>
-
-      {(status.error || actionError) && (
-        <div className="border-t border-neutral-800 p-2 text-xs text-red-400">
-          {actionError ?? status.error}
+          {visibleMessages.length === 0 && (
+            <div className="sw-mono text-[var(--sw-text-faint)]">— Waiting for transmission —</div>
+          )}
+          {visibleMessages.map((m) => {
+            const isSelf = !!user && m.username === user.login.toLowerCase();
+            const showActions = canModerate && !isSelf && !m.isBroadcaster;
+            return (
+              <div key={m.id} className="group flex items-start justify-between gap-2 break-words">
+                <div className="min-w-0 flex-1">
+                  <span
+                    className="font-semibold"
+                    style={{
+                      color: m.color || "#ff7adc",
+                      textShadow: `0 0 6px ${m.color || "#ff7adc"}55`,
+                    }}
+                  >
+                    {m.isBroadcaster && "👑 "}
+                    {m.isMod && "🛡 "}
+                    {m.displayName}
+                  </span>
+                  <span className="text-[var(--sw-text)]">: {renderMessage(m, sevenTvEmotes)}</span>
+                </div>
+                {showActions && (
+                  <ChatMessageActions
+                    username={m.username}
+                    onDelete={() => void deleteMessage(m.id)}
+                    onTimeout={(sec) => void banUser(m.userId, m.username, sec)}
+                    onBan={(reason) => void banUser(m.userId, m.username, undefined, reason)}
+                    onBlock={() => void blockUser(m.userId)}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
-      )}
-    </div>
+
+        <form onSubmit={onSubmit} className="flex gap-2 border-t border-[rgba(255,32,121,0.40)] bg-[rgba(7,0,15,0.5)] p-3">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="> transmit…"
+            className="sw-input flex-1 text-sm"
+          />
+          <button type="submit" disabled={!status.connected} className="btn btn-primary">
+            Send ▶
+          </button>
+        </form>
+
+        {(status.error || actionError) && (
+          <div className="sw-mono border-t border-[rgba(255,56,89,0.4)] p-2 text-xs text-[var(--sw-danger)]">
+            {actionError ?? status.error}
+          </div>
+        )}
+      </div>
+    </PanelFrame>
   );
 }

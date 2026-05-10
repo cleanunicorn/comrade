@@ -1,5 +1,44 @@
 const KEY = "comrade.settings";
 
+export interface PanelLayoutItem {
+  i: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  minW?: number;
+  minH?: number;
+}
+
+export type PanelLayouts = Record<string, PanelLayoutItem[]>;
+
+export const PANEL_IDS = ["cam", "stats", "summary", "viewers", "chat"] as const;
+export type PanelId = (typeof PANEL_IDS)[number];
+
+export const DEFAULT_PANEL_LAYOUTS: PanelLayouts = {
+  lg: [
+    { i: "cam",     x: 0,  y: 0, w: 4, h: 14, minW: 3, minH: 8 },
+    { i: "stats",   x: 0,  y: 14, w: 4, h: 5,  minW: 3, minH: 4 },
+    { i: "summary", x: 0,  y: 19, w: 4, h: 9,  minW: 3, minH: 6 },
+    { i: "viewers", x: 4,  y: 0, w: 2, h: 28, minW: 2, minH: 6 },
+    { i: "chat",    x: 6,  y: 0, w: 6, h: 28, minW: 3, minH: 8 },
+  ],
+  md: [
+    { i: "cam",     x: 0, y: 0,  w: 5, h: 14, minW: 3, minH: 8 },
+    { i: "stats",   x: 5, y: 0,  w: 5, h: 5,  minW: 3, minH: 4 },
+    { i: "summary", x: 5, y: 5,  w: 5, h: 9,  minW: 3, minH: 6 },
+    { i: "viewers", x: 0, y: 14, w: 4, h: 14, minW: 2, minH: 6 },
+    { i: "chat",    x: 4, y: 14, w: 6, h: 14, minW: 3, minH: 8 },
+  ],
+  sm: [
+    { i: "cam",     x: 0, y: 0,  w: 6, h: 14, minW: 3, minH: 8 },
+    { i: "stats",   x: 0, y: 14, w: 6, h: 5,  minW: 3, minH: 4 },
+    { i: "chat",    x: 0, y: 19, w: 6, h: 16, minW: 3, minH: 8 },
+    { i: "viewers", x: 0, y: 35, w: 6, h: 10, minW: 2, minH: 6 },
+    { i: "summary", x: 0, y: 45, w: 6, h: 10, minW: 3, minH: 6 },
+  ],
+};
+
 export interface Settings {
   twitchClientId: string;
   redirectUri: string;
@@ -22,6 +61,8 @@ export interface Settings {
   statsFontSize: number;
   summaryFontSize: number;
   viewersFontSize: number;
+  panelLayouts: PanelLayouts;
+  hiddenPanels: PanelId[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -46,6 +87,8 @@ export const DEFAULT_SETTINGS: Settings = {
   statsFontSize: 14,
   summaryFontSize: 12,
   viewersFontSize: 12,
+  panelLayouts: DEFAULT_PANEL_LAYOUTS,
+  hiddenPanels: [],
 };
 
 export function loadSettings(): Settings {

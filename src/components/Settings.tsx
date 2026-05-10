@@ -87,129 +87,109 @@ export function Settings({ onDone, embedded }: Props) {
   }
 
   return (
-    <div className={embedded ? "" : "flex h-full items-center justify-center p-6"}>
-      <form
-        onSubmit={save}
-        className="w-full max-w-xl space-y-5 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-8 shadow-xl"
-      >
+    <div className={embedded ? "" : "flex h-full items-center justify-center overflow-auto p-6"}>
+      <form onSubmit={save} className="panel w-full max-w-xl p-8 space-y-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="mt-1 text-sm text-neutral-400">
-            Stored only in your browser (localStorage). Nothing leaves this device except
-            calls to Twitch.
+          <div className="sw-accent mb-1 text-[10px] text-[var(--sw-cyan)]">// Configuration Grid</div>
+          <h1 className="sw-display text-4xl">Settings</h1>
+          <p className="mt-2 sw-mono text-xs text-[var(--sw-text-dim)]">
+            Stored only in your browser (localStorage). Nothing leaves this device except calls to Twitch.
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-neutral-300">Twitch Client ID</label>
+          <label className="sw-accent block text-[10px] text-[var(--sw-cyan)]">Twitch Client ID</label>
           <input
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
             placeholder="abc123…"
-            className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+            className="sw-input w-full text-sm"
             required
           />
-          <p className="text-xs text-neutral-500">
+          <p className="sw-mono text-[11px] text-[var(--sw-text-faint)]">
             Create an app at{" "}
             <a
               href="https://dev.twitch.tv/console/apps"
               target="_blank"
               rel="noreferrer"
-              className="text-violet-400 underline"
+              className="text-[var(--sw-pink-soft)] underline"
             >
               dev.twitch.tv/console/apps
             </a>
-            . OAuth Redirect URL must match the field below. Category: "Application Integration".
+            . OAuth Redirect URL must match below. Category: "Application Integration".
           </p>
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-neutral-300">Redirect URI</label>
+          <label className="sw-accent block text-[10px] text-[var(--sw-cyan)]">Redirect URI</label>
           <input
             value={redirectUri}
             onChange={(e) => setRedirectUri(e.target.value)}
-            className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+            className="sw-input w-full text-sm"
             required
           />
-          <p className="text-xs text-neutral-500">
-            Default: <code className="text-neutral-400">{window.location.origin}/</code>
+          <p className="sw-mono text-[11px] text-[var(--sw-text-faint)]">
+            Default: <code className="text-[var(--sw-cyan)]">{window.location.origin}/</code>
           </p>
         </div>
 
-        <div className="space-y-3 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
+        <div className="space-y-3 rounded-sm border border-[rgba(0,240,255,0.30)] bg-[rgba(0,240,255,0.04)] p-3">
           <div>
-            <div className="text-sm font-medium text-neutral-300">LLM (chat summaries)</div>
-            <p className="mt-1 text-xs text-neutral-500">
-              OpenAI key, or any OpenAI-compatible endpoint (LM Studio, Ollama, OpenRouter, Together, etc.).
-              Stored in localStorage only.
+            <div className="sw-accent text-[11px] text-[var(--sw-cyan)]">▌ LLM (chat summaries)</div>
+            <p className="mt-1 sw-mono text-[11px] text-[var(--sw-text-faint)]">
+              OpenAI key, or any OpenAI-compatible endpoint. Stored in localStorage only.
             </p>
           </div>
           <div className="space-y-1">
-            <label className="block text-xs font-medium text-neutral-400">API key</label>
+            <label className="sw-accent block text-[10px] text-[var(--sw-text-dim)]">API key</label>
             <input
               type="password"
               autoComplete="off"
               value={llmApiKey}
               onChange={(e) => setLlmApiKey(e.target.value)}
               placeholder="sk-…"
-              className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+              className="sw-input w-full text-sm"
             />
           </div>
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-neutral-400">Base URL</label>
+              <label className="sw-accent block text-[10px] text-[var(--sw-text-dim)]">Base URL</label>
               <input
                 value={llmBaseUrl}
                 onChange={(e) => setLlmBaseUrl(e.target.value)}
                 placeholder="https://api.openai.com/v1"
-                className="w-full rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                className="sw-input w-full text-sm"
               />
             </div>
             <div className="space-y-1">
-              <label className="block text-xs font-medium text-neutral-400">Model</label>
+              <label className="sw-accent block text-[10px] text-[var(--sw-text-dim)]">Model</label>
               <input
                 value={llmModel}
                 onChange={(e) => setLlmModel(e.target.value)}
                 placeholder="gpt-4o-mini"
-                className="w-44 rounded bg-neutral-800 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-500"
+                className="sw-input w-44 text-sm"
               />
             </div>
           </div>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-neutral-800 bg-neutral-900/40 p-3">
-          <div className="text-sm font-medium text-neutral-300">Backup</div>
-          <p className="text-xs text-neutral-500">
-            Export/import all Comrade localStorage (settings, OAuth token, chat cache).
+        <div className="space-y-2 rounded-sm border border-[rgba(255,32,121,0.40)] bg-[rgba(255,32,121,0.05)] p-3">
+          <div className="sw-accent text-[11px] text-[var(--sw-pink-soft)]">▌ Backup ∙ Layout</div>
+          <p className="sw-mono text-[11px] text-[var(--sw-text-faint)]">
+            Export/import all Comrade localStorage — including panel layout — settings, token, chat cache.
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={copySettingsToClipboard}
-              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
-            >
-              Copy settings
+            <button type="button" onClick={copySettingsToClipboard} className="btn btn-ghost btn-sm">
+              ⎘ Copy
             </button>
-            <button
-              type="button"
-              onClick={pasteSettingsFromClipboard}
-              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
-            >
-              Paste settings
+            <button type="button" onClick={pasteSettingsFromClipboard} className="btn btn-ghost btn-sm">
+              ⎗ Paste
             </button>
-            <button
-              type="button"
-              onClick={downloadExport}
-              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
-            >
-              Download JSON
+            <button type="button" onClick={downloadExport} className="btn btn-cyan btn-sm">
+              ↓ Download JSON
             </button>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="rounded border border-neutral-700 px-3 py-1 text-xs text-neutral-200 hover:bg-neutral-800"
-            >
-              Import file
+            <button type="button" onClick={() => fileRef.current?.click()} className="btn btn-cyan btn-sm">
+              ↑ Import file
             </button>
             <input
               ref={fileRef}
@@ -220,7 +200,7 @@ export function Settings({ onDone, embedded }: Props) {
             />
           </div>
           {backupMsg && (
-            <div className={`text-xs ${backupMsg.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+            <div className={`sw-mono text-[11px] ${backupMsg.kind === "ok" ? "text-[var(--sw-success)]" : "text-[var(--sw-danger)]"}`}>
               {backupMsg.text}
             </div>
           )}
@@ -228,19 +208,12 @@ export function Settings({ onDone, embedded }: Props) {
 
         <div className="flex items-center justify-between pt-2">
           {onDone && (
-            <button
-              type="button"
-              onClick={onDone}
-              className="text-sm text-neutral-400 hover:text-neutral-200"
-            >
-              Cancel
+            <button type="button" onClick={onDone} className="btn btn-ghost btn-sm">
+              ← Cancel
             </button>
           )}
-          <button
-            type="submit"
-            className="ml-auto rounded-lg bg-violet-600 px-5 py-2 font-semibold text-white hover:bg-violet-500"
-          >
-            Save
+          <button type="submit" className="btn btn-primary ml-auto">
+            ✓ Save
           </button>
         </div>
       </form>

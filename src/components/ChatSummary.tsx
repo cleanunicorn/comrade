@@ -5,6 +5,8 @@ import { useStreamInfo } from "../twitch/useStreamInfo";
 import { useSettings } from "../settings/useSettings";
 import { chatCompletion } from "../llm/openai";
 import { FontSizer } from "./FontSizer";
+import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 const MAX_MESSAGES = 400;
 const MAX_CHARS = 12_000;
@@ -161,127 +163,109 @@ export function ChatSummary() {
     navigator.clipboard.writeText(summary).catch(() => {});
   }
 
-  return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">
-            Chat summary
-          </h2>
-          <FontSizer
-            value={settings.summaryFontSize}
-            onChange={(n) => update({ summaryFontSize: n })}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="flex items-center gap-1 text-[10px] text-neutral-400" title="Panel auto-refresh, 0 = off">
-            Auto
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={settings.summaryAutoMinutes}
-              onChange={(e) =>
-                update({
-                  summaryAutoMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))),
-                })
-              }
-              className="w-12 rounded bg-neutral-800 px-1.5 py-0.5 text-right text-[10px] text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            m
-          </label>
-          <label className="flex items-center gap-1 text-[10px] text-neutral-400" title="Auto-post short summary into Twitch chat, 0 = off">
-            Post every
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={settings.chatPostSummaryMinutes}
-              onChange={(e) =>
-                update({
-                  chatPostSummaryMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))),
-                })
-              }
-              className="w-12 rounded bg-neutral-800 px-1.5 py-0.5 text-right text-[10px] text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            m
-          </label>
-          <label className="flex items-center gap-1 text-[10px] text-neutral-400" title="Post mode summarizes only messages from the last N minutes">
-            window
-            <input
-              type="number"
-              min={1}
-              max={120}
-              value={settings.chatPostWindowMinutes}
-              onChange={(e) =>
-                update({
-                  chatPostWindowMinutes: Math.max(1, Math.min(120, parseInt(e.target.value || "1", 10))),
-                })
-              }
-              className="w-12 rounded bg-neutral-800 px-1.5 py-0.5 text-right text-[10px] text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
-            />
-            m
-          </label>
-          {summary && (
-            <button
-              type="button"
-              onClick={copy}
-              className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-800"
-            >
-              Copy
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => generate({ post: true })}
-            disabled={!canRun || !status.connected}
-            title={!status.connected ? "Chat not connected" : "Post short summary to Twitch chat"}
-            className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-800 disabled:opacity-50"
-          >
-            Post
-          </button>
-          <button
-            type="button"
-            onClick={() => generate()}
-            disabled={!canRun}
-            className="rounded bg-violet-600 px-3 py-1 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-          >
-            {loading ? "Summarizing…" : summary ? "Refresh" : "Summarize"}
-          </button>
-        </div>
-      </div>
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={settings.summaryFontSize} onChange={(n) => update({ summaryFontSize: n })} />
+      </Row>
+      <Row label="Auto (min)">
+        <input
+          type="number"
+          min={0}
+          max={120}
+          value={settings.summaryAutoMinutes}
+          onChange={(e) =>
+            update({ summaryAutoMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))) })
+          }
+          className="sw-input w-14 text-right text-xs"
+          title="Panel auto-refresh, 0 = off"
+        />
+      </Row>
+      <Row label="Post (min)">
+        <input
+          type="number"
+          min={0}
+          max={120}
+          value={settings.chatPostSummaryMinutes}
+          onChange={(e) =>
+            update({ chatPostSummaryMinutes: Math.max(0, Math.min(120, parseInt(e.target.value || "0", 10))) })
+          }
+          className="sw-input w-14 text-right text-xs"
+          title="Auto-post short summary, 0 = off"
+        />
+      </Row>
+      <Row label="Window (min)">
+        <input
+          type="number"
+          min={1}
+          max={120}
+          value={settings.chatPostWindowMinutes}
+          onChange={(e) =>
+            update({ chatPostWindowMinutes: Math.max(1, Math.min(120, parseInt(e.target.value || "1", 10))) })
+          }
+          className="sw-input w-14 text-right text-xs"
+          title="Window minutes"
+        />
+      </Row>
+    </PanelMenu>
+  );
 
-      <div className="mb-2 text-[10px] text-neutral-500">
+  const controls = (
+    <>
+      {summary && (
+        <button type="button" onClick={copy} className="btn btn-ghost btn-sm">Copy</button>
+      )}
+      <button
+        type="button"
+        onClick={() => generate({ post: true })}
+        disabled={!canRun || !status.connected}
+        title={!status.connected ? "Chat not connected" : "Post short summary to Twitch chat"}
+        className="btn btn-cyan btn-sm"
+      >
+        ▶ Post
+      </button>
+      <button
+        type="button"
+        onClick={() => generate()}
+        disabled={!canRun}
+        className="btn btn-primary btn-sm"
+      >
+        {loading ? "Generating…" : summary ? "↻ Refresh" : "✦ Summarize"}
+      </button>
+    </>
+  );
+
+  return (
+    <PanelFrame title="▌ Chat Summary" menu={menu} controls={controls}>
+      <div className="mb-2 sw-mono text-[10px] text-[var(--sw-text-faint)]">
         {stream
-          ? `Since stream start · ${filtered.length} messages`
-          : `Stream offline · using all ${filtered.length} cached messages`}
+          ? <>Since stream start · <span className="sw-num text-[var(--sw-cyan)]">{filtered.length}</span> msgs</>
+          : <>Offline · <span className="sw-num text-[var(--sw-cyan)]">{filtered.length}</span> cached</>}
         {generatedAt && (
-          <span className="ml-2">
-            · generated {Math.floor((now - generatedAt) / 1000)}s ago
-          </span>
+          <span className="ml-2">· gen <span className="sw-num">{Math.floor((now - generatedAt) / 1000)}</span>s ago</span>
         )}
       </div>
 
       {!settings.llmApiKey && (
-        <div className="mb-2 text-xs text-amber-400">
-          Add an LLM API key in Settings to enable.
+        <div className="mb-2 sw-mono text-xs text-[var(--sw-yellow)]">
+          ! Add an LLM API key in Settings.
         </div>
       )}
 
-      {error && <div className="mb-2 text-xs text-red-400">{error}</div>}
+      {error && <div className="mb-2 sw-mono text-xs text-[var(--sw-danger)]">{error}</div>}
 
       {summary ? (
         <div
-          className="markdown-summary max-h-144 overflow-y-auto rounded bg-neutral-900/60 p-3 text-neutral-200"
+          className="markdown-summary max-h-144 overflow-y-auto rounded-sm border border-[rgba(0,240,255,0.25)] bg-[rgba(7,0,15,0.6)] p-3"
           style={{ fontSize: `${settings.summaryFontSize}px` }}
         >
           <ReactMarkdown>{summary}</ReactMarkdown>
         </div>
       ) : (
-        <div className="text-xs text-neutral-500">
-          {loading ? "Calling LLM…" : "No summary yet."}
+        <div className="sw-mono text-xs text-[var(--sw-text-faint)]">
+          {loading ? "▒▒ Calling LLM ▒▒" : "— No summary yet —"}
         </div>
       )}
-    </div>
+    </PanelFrame>
   );
 }

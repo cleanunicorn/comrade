@@ -3,6 +3,8 @@ import { useMedia } from "../media/useMedia";
 import { useDevices } from "../media/useDevices";
 import { useSettings } from "../settings/useSettings";
 import { FontSizer } from "./FontSizer";
+import { PanelFrame } from "./PanelFrame";
+import { PanelMenu, Row } from "./PanelMenu";
 
 export function CamPanel() {
   const { settings, update } = useSettings();
@@ -88,153 +90,154 @@ export function CamPanel() {
     prevNudgeRef.current = shouldNudge;
   }, [shouldNudge, settings.nudgeCount, update]);
 
-  return (
-    <div
-      className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-900/40 p-4"
-      style={{ fontSize: `${settings.camFontSize}px` }}
+  const menu = (
+    <PanelMenu>
+      <Row label="Font">
+        <FontSizer value={settings.camFontSize} onChange={(n) => update({ camFontSize: n })} />
+      </Row>
+      <Row label="Auto-start">
+        <input
+          type="checkbox"
+          checked={settings.autoStartMedia}
+          onChange={(e) => update({ autoStartMedia: e.target.checked })}
+          className="sw-checkbox h-3.5 w-3.5"
+        />
+      </Row>
+    </PanelMenu>
+  );
+
+  const controls = active ? (
+    <button onClick={stop} className="btn btn-danger btn-sm">■ Stop</button>
+  ) : (
+    <button
+      onClick={start}
+      disabled={bothDisabled}
+      title={bothDisabled ? "Enable cam or mic first" : ""}
+      className="btn btn-success btn-sm"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-neutral-400">Camera + Mic</h2>
-          <FontSizer value={settings.camFontSize} onChange={(n) => update({ camFontSize: n })} />
+      ▶ Start
+    </button>
+  );
+
+  return (
+    <PanelFrame title="▌ Cam ∙ Mic" menu={menu} controls={controls}>
+      <div className="flex flex-col gap-3" style={{ fontSize: `${settings.camFontSize}px` }}>
+        <div className="relative aspect-video overflow-hidden rounded-sm border border-[rgba(0,240,255,0.35)] bg-black shadow-[0_0_16px_rgba(0,240,255,0.25)]">
+          <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+          {!active && (
+            <div className="absolute inset-0 flex items-center justify-center sw-accent text-[var(--sw-text-faint)]">
+              ◌ Camera Off
+            </div>
+          )}
+          <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1 sw-accent text-[9px]">
+            <span className={`sw-dot ${active ? "live" : ""}`} />
+            {active ? "REC" : "STBY"}
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-neutral-400 select-none">
-            <input
-              type="checkbox"
-              checked={settings.autoStartMedia}
-              onChange={(e) => update({ autoStartMedia: e.target.checked })}
-              className="h-3.5 w-3.5 accent-violet-500"
-            />
-            Auto-start
-          </label>
-          {active ? (
-            <button onClick={stop} className="rounded bg-red-600 px-3 py-1 text-xs font-semibold hover:bg-red-500">
-              Stop
-            </button>
-          ) : (
-            <button
-              onClick={start}
-              disabled={bothDisabled}
-              title={bothDisabled ? "Enable cam or mic first" : ""}
-              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold hover:bg-emerald-500 disabled:opacity-50 disabled:hover:bg-emerald-600"
-            >
-              Start
+
+        <div className="grid grid-cols-1 gap-2">
+          <DevicePicker
+            label="Camera"
+            devices={devices.cameras}
+            value={settings.videoDeviceId}
+            onChange={(id) => update({ videoDeviceId: id })}
+            placeholderLabel="Camera"
+            enabled={settings.enableVideo}
+            onToggleEnabled={(v) => update({ enableVideo: v })}
+          />
+          <DevicePicker
+            label="Mic"
+            devices={devices.mics}
+            value={settings.audioDeviceId}
+            onChange={(id) => update({ audioDeviceId: id })}
+            placeholderLabel="Microphone"
+            enabled={settings.enableAudio}
+            onToggleEnabled={(v) => update({ enableAudio: v })}
+          />
+          {!devices.permissionGranted && (
+            <button onClick={devices.requestPermission} className="btn btn-ghost btn-sm">
+              Grant device access
             </button>
           )}
         </div>
-      </div>
 
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
-        <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
-        {!active && (
-          <div className="absolute inset-0 flex items-center justify-center text-neutral-500">
-            Camera off
+        <div>
+          <div className="mb-1 flex items-center justify-between sw-accent text-[9px]">
+            <span>Mic Lv <span className="sw-num text-[var(--sw-cyan)]">{levelPct}</span></span>
+            <span className="text-[var(--sw-yellow)]">▲ Threshold <span className="sw-num">{thresholdPct}</span></span>
           </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 gap-2">
-        <DevicePicker
-          label="Camera"
-          devices={devices.cameras}
-          value={settings.videoDeviceId}
-          onChange={(id) => update({ videoDeviceId: id })}
-          placeholderLabel="Camera"
-          enabled={settings.enableVideo}
-          onToggleEnabled={(v) => update({ enableVideo: v })}
-        />
-        <DevicePicker
-          label="Microphone"
-          devices={devices.mics}
-          value={settings.audioDeviceId}
-          onChange={(id) => update({ audioDeviceId: id })}
-          placeholderLabel="Microphone"
-          enabled={settings.enableAudio}
-          onToggleEnabled={(v) => update({ enableAudio: v })}
-        />
-        {!devices.permissionGranted && (
-          <button
-            onClick={devices.requestPermission}
-            className="rounded border border-neutral-700 px-2 py-1 text-xs text-neutral-300 hover:bg-neutral-800"
-          >
-            Grant device access to see names
-          </button>
-        )}
-      </div>
-
-      <div>
-        <div className="mb-1 flex items-center justify-between text-xs text-neutral-400">
-          <span>Mic level {levelPct}</span>
-          <span className="text-neutral-500">threshold {thresholdPct}</span>
-        </div>
-        <div className="relative h-9 w-full overflow-hidden rounded bg-neutral-800">
-          <div
-            className="absolute inset-y-0 left-0 bg-emerald-500 transition-[width] duration-75"
-            style={{ width: `${levelPct * 2}%` }}
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 w-px bg-amber-300/70"
-            style={{ left: `${thresholdPct}%` }}
-          />
-          <input
-            type="range"
-            min={0}
-            max={0.25}
-            step={0.0025}
-            value={settings.speakThreshold}
-            onChange={(e) => update({ speakThreshold: parseFloat(e.target.value) })}
-            className="threshold-slider absolute inset-0 w-full"
-            aria-label="Speech threshold"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span className="text-neutral-400">
-          {lastSpokeAt
-            ? `Last spoke ${formatDuration(silentMs!)} ago`
-            : active
-              ? "Waiting to detect speech…"
-              : "Mic off"}
-        </span>
-        <span className="flex items-center gap-1 text-neutral-400">
-          Nudges: <span className="font-semibold text-neutral-200">{settings.nudgeCount}</span>
-          <button
-            type="button"
-            onClick={() => update({ nudgeCount: 0 })}
-            className="ml-1 rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400 hover:bg-neutral-800"
-          >
-            Reset
-          </button>
-        </span>
-        <label className="flex items-center gap-1 text-neutral-400">
-          Nudge after
-          <input
-            type="number"
-            min={1}
-            max={3600}
-            value={settings.silenceNudgeSeconds}
-            onChange={(e) =>
-              update({ silenceNudgeSeconds: Math.max(1, parseInt(e.target.value || "1", 10)) })
-            }
-            className="w-16 rounded bg-neutral-800 px-2 py-1 text-right text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500"
-          />
-          sec
-        </label>
-      </div>
-
-      {shouldNudge && (
-        <div className="nudge-flash pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-8">
-          <div className="rounded-lg bg-red-600 px-6 py-3 text-sm font-bold text-white shadow-2xl">
-            Silent {formatDuration(silentMs!)} — talk to chat!
+          <div className="relative h-9 w-full overflow-hidden rounded-sm border border-[rgba(0,240,255,0.30)] bg-[rgba(7,0,15,0.6)]">
+            <div
+              className="absolute inset-y-0 left-0 transition-[width] duration-75"
+              style={{
+                width: `${levelPct * 2}%`,
+                background: "linear-gradient(90deg, var(--sw-cyan), var(--sw-pink))",
+                boxShadow: "0 0 12px rgba(255,32,121,0.6)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-y-0 w-px"
+              style={{ left: `${thresholdPct}%`, background: "var(--sw-yellow)", boxShadow: "0 0 6px var(--sw-yellow)" }}
+            />
+            <input
+              type="range"
+              min={0}
+              max={0.25}
+              step={0.0025}
+              value={settings.speakThreshold}
+              onChange={(e) => update({ speakThreshold: parseFloat(e.target.value) })}
+              className="threshold-slider absolute inset-0 w-full"
+              aria-label="Speech threshold"
+            />
           </div>
         </div>
-      )}
 
-      {media.error && <div className="text-xs text-red-400">{media.error}</div>}
-      {devices.error && <div className="text-xs text-red-400">{devices.error}</div>}
-    </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 sw-mono text-[11px] text-[var(--sw-text-dim)]">
+          <span>
+            {lastSpokeAt
+              ? <>Spoke <span className="sw-num text-[var(--sw-cyan)]">{formatDuration(silentMs!)}</span> ago</>
+              : active
+                ? "Listening…"
+                : "Mic off"}
+          </span>
+          <span className="flex items-center gap-1">
+            Nudges <span className="sw-num text-[var(--sw-pink)]">{settings.nudgeCount}</span>
+            <button
+              type="button"
+              onClick={() => update({ nudgeCount: 0 })}
+              className="btn btn-ghost btn-sm"
+            >
+              Reset
+            </button>
+          </span>
+          <label className="flex items-center gap-1">
+            After
+            <input
+              type="number"
+              min={1}
+              max={3600}
+              value={settings.silenceNudgeSeconds}
+              onChange={(e) =>
+                update({ silenceNudgeSeconds: Math.max(1, parseInt(e.target.value || "1", 10)) })
+              }
+              className="sw-input w-16 text-right text-xs"
+            />
+            sec
+          </label>
+        </div>
+
+        {shouldNudge && (
+          <div className="nudge-flash pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-8">
+            <div className="sw-accent rounded-sm border border-[var(--sw-pink)] bg-[rgba(255,32,121,0.85)] px-6 py-3 text-sm font-bold text-white shadow-[0_0_30px_rgba(255,32,121,0.85)]">
+              ▲ Silent {formatDuration(silentMs!)} — Engage Chat
+            </div>
+          </div>
+        )}
+
+        {media.error && <div className="sw-mono text-xs text-[var(--sw-danger)]">{media.error}</div>}
+        {devices.error && <div className="sw-mono text-xs text-[var(--sw-danger)]">{devices.error}</div>}
+      </div>
+    </PanelFrame>
   );
 }
 
@@ -274,16 +277,16 @@ function DevicePicker({
         checked={enabled}
         onChange={(e) => onToggleEnabled(e.target.checked)}
         title={enabled ? `Disable ${label.toLowerCase()}` : `Enable ${label.toLowerCase()}`}
-        className="h-3.5 w-3.5 shrink-0 accent-violet-500"
+        className="sw-checkbox h-3.5 w-3.5 shrink-0"
       />
-      <span className={`w-16 shrink-0 ${enabled ? "text-neutral-400" : "text-neutral-600 line-through"}`}>
+      <span className={`sw-accent w-14 shrink-0 text-[10px] ${enabled ? "text-[var(--sw-cyan)]" : "text-[var(--sw-text-faint)] line-through"}`}>
         {label}
       </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={!enabled}
-        className="min-w-0 flex-1 truncate rounded bg-neutral-800 px-2 py-1 text-xs text-neutral-200 outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-40"
+        className="sw-select min-w-0 flex-1 truncate text-xs disabled:opacity-40"
       >
         <option value="">Default {placeholderLabel.toLowerCase()}</option>
         {devices.map((d) => (
