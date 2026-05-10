@@ -16,17 +16,17 @@ export function FontSizer({ value, onChange, min = 10, max = 28 }: Props) {
         onClick={() => set(v - 1)}
         disabled={v <= min}
         title="Decrease font size"
-        className="rounded border border-neutral-700 px-1.5 py-0.5 text-[10px] leading-none text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
+        className="btn btn-ghost btn-sm leading-none"
       >
         −
       </button>
-      <span className="w-5 text-center text-[10px] tabular-nums text-neutral-500">{v}</span>
+      <span className="sw-num w-5 text-center text-[11px] text-[var(--sw-cyan)]">{v}</span>
       <button
         type="button"
         onClick={() => set(v + 1)}
         disabled={v >= max}
         title="Increase font size"
-        className="rounded border border-neutral-700 px-1.5 py-0.5 text-[10px] leading-none text-neutral-300 hover:bg-neutral-800 disabled:opacity-40"
+        className="btn btn-ghost btn-sm leading-none"
       >
         +
       </button>
