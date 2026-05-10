@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useChat } from "../twitch/useChatContext";
 import { type ChatMessage } from "../twitch/useChat";
 import { emoteUrl, type SevenTvEmote } from "../twitch/sevenTv";
 import { useSettings } from "../settings/useSettings";
+import { useAuth } from "../auth/useAuth";
 import { FontSizer } from "./FontSizer";
+import { ChatMessageActions } from "./ChatMessageActions";
 
 function renderTextWith7tv(
   text: string,
@@ -65,16 +67,41 @@ function renderMessage(m: ChatMessage, sevenTv: Record<string, SevenTvEmote>): R
 }
 
 export function ChatPanel() {
-  const { messages, status, send, sevenTvEmotes } = useChat();
+  const {
+    messages,
+    status,
+    send,
+    sevenTvEmotes,
+    canModerate,
+    deletedIds,
+    bannedUsers,
+    blockedUserIds,
+    deleteMessage,
+    banUser,
+    blockUser,
+    actionError,
+  } = useChat();
   const { settings, update } = useSettings();
+  const { user } = useAuth();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const fontSize = settings.chatFontSize;
 
+  const visibleMessages = useMemo(
+    () =>
+      messages.filter(
+        (m) =>
+          !deletedIds.has(m.id) &&
+          !blockedUserIds.has(m.userId) &&
+          !bannedUsers.has(m.username),
+      ),
+    [messages, deletedIds, blockedUserIds, bannedUsers],
+  );
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages]);
+  }, [visibleMessages]);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -100,19 +127,37 @@ export function ChatPanel() {
         className="flex-1 space-y-1 overflow-y-auto p-3"
         style={{ fontSize: `${fontSize}px` }}
       >
-        {messages.length === 0 && (
+        {visibleMessages.length === 0 && (
           <div className="text-neutral-500">Waiting for messages…</div>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className="break-words">
-            <span className="font-semibold" style={{ color: m.color || "#bf94ff" }}>
-              {m.isBroadcaster && "👑 "}
-              {m.isMod && "🛡 "}
-              {m.displayName}
-            </span>
-            <span className="text-neutral-300">: {renderMessage(m, sevenTvEmotes)}</span>
-          </div>
-        ))}
+        {visibleMessages.map((m) => {
+          const isSelf = !!user && m.username === user.login.toLowerCase();
+          const showActions = canModerate && !isSelf && !m.isBroadcaster;
+          return (
+            <div
+              key={m.id}
+              className="group flex items-start justify-between gap-2 break-words"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold" style={{ color: m.color || "#bf94ff" }}>
+                  {m.isBroadcaster && "👑 "}
+                  {m.isMod && "🛡 "}
+                  {m.displayName}
+                </span>
+                <span className="text-neutral-300">: {renderMessage(m, sevenTvEmotes)}</span>
+              </div>
+              {showActions && (
+                <ChatMessageActions
+                  username={m.username}
+                  onDelete={() => void deleteMessage(m.id)}
+                  onTimeout={(sec) => void banUser(m.userId, m.username, sec)}
+                  onBan={(reason) => void banUser(m.userId, m.username, undefined, reason)}
+                  onBlock={() => void blockUser(m.userId)}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <form onSubmit={onSubmit} className="flex gap-2 border-t border-neutral-800 p-3">
@@ -131,7 +176,11 @@ export function ChatPanel() {
         </button>
       </form>
 
-      {status.error && <div className="border-t border-neutral-800 p-2 text-xs text-red-400">{status.error}</div>}
+      {(status.error || actionError) && (
+        <div className="border-t border-neutral-800 p-2 text-xs text-red-400">
+          {actionError ?? status.error}
+        </div>
+      )}
     </div>
   );
 }

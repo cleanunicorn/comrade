@@ -45,16 +45,32 @@ export function helix(accessToken: string, clientId: string) {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  async function get<T>(path: string, params: Record<string, string | string[]> = {}): Promise<T> {
+  async function request<T>(
+    method: string,
+    path: string,
+    params: Record<string, string | string[]> = {},
+    body?: unknown,
+  ): Promise<T> {
     const usp = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       if (Array.isArray(v)) v.forEach((x) => usp.append(k, x));
       else usp.append(k, v);
     }
     const qs = usp.toString();
-    const res = await fetch(`${BASE}${path}${qs ? `?${qs}` : ""}`, { headers });
+    const init: RequestInit = { method, headers: { ...headers } };
+    if (body !== undefined) {
+      (init.headers as Record<string, string>)["Content-Type"] = "application/json";
+      init.body = JSON.stringify(body);
+    }
+    const res = await fetch(`${BASE}${path}${qs ? `?${qs}` : ""}`, init);
     if (!res.ok) throw new HelixError(res.status, await res.text());
-    return res.json() as Promise<T>;
+    if (res.status === 204) return undefined as T;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
+  }
+
+  function get<T>(path: string, params: Record<string, string | string[]> = {}): Promise<T> {
+    return request<T>("GET", path, params);
   }
 
   return {
@@ -123,6 +139,47 @@ export function helix(accessToken: string, clientId: string) {
         user_id: userId,
       });
       return r.data.length > 0;
+    },
+
+    async deleteChatMessage(
+      broadcasterId: string,
+      moderatorId: string,
+      messageId: string,
+    ): Promise<void> {
+      await request<void>("DELETE", "/moderation/chat", {
+        broadcaster_id: broadcasterId,
+        moderator_id: moderatorId,
+        message_id: messageId,
+      });
+    },
+
+    async banUser(
+      broadcasterId: string,
+      moderatorId: string,
+      userId: string,
+      opts?: { duration?: number; reason?: string },
+    ): Promise<void> {
+      const data: { user_id: string; duration?: number; reason?: string } = {
+        user_id: userId,
+      };
+      if (opts?.duration) data.duration = opts.duration;
+      if (opts?.reason) data.reason = opts.reason;
+      await request<void>(
+        "POST",
+        "/moderation/bans",
+        { broadcaster_id: broadcasterId, moderator_id: moderatorId },
+        { data },
+      );
+    },
+
+    async blockUser(
+      targetUserId: string,
+      opts?: { sourceContext?: "chat"; reason?: "spam" | "harassment" | "other" },
+    ): Promise<void> {
+      const params: Record<string, string> = { target_user_id: targetUserId };
+      if (opts?.sourceContext) params.source_context = opts.sourceContext;
+      if (opts?.reason) params.reason = opts.reason;
+      await request<void>("PUT", "/users/blocks", params);
     },
   };
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   clearAuth,
+  hasRequiredScopes,
   loadToken,
   loadUser,
   parseFragment,
@@ -38,6 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const v = await validateToken(t.accessToken);
         if (!v) {
           clearAuth();
+          setLoading(false);
+          return;
+        }
+
+        if (!hasRequiredScopes(v.scopes)) {
+          clearAuth();
+          setError("New permissions needed for moderation. Please log in again.");
           setLoading(false);
           return;
         }
