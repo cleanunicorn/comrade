@@ -80,7 +80,6 @@ export function useChatImpl(channel?: string) {
   const clientRef = useRef<tmi.Client | null>(null);
   const myColorRef = useRef<string | null>(null);
   const [sevenTvEmotes, setSevenTvEmotes] = useState<Record<string, SevenTvEmote>>({});
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [bannedUsers, setBannedUsers] = useState<Set<string>>(new Set());
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(() => {
     const u = loadUser();
@@ -134,7 +133,6 @@ export function useChatImpl(channel?: string) {
 
     // Reset per-channel sets on switch
     /* eslint-disable react-hooks/set-state-in-effect */
-    setDeletedIds(new Set());
     setBannedUsers(new Set());
     setSelfIsMod(false);
     /* eslint-enable react-hooks/set-state-in-effect */
@@ -206,7 +204,12 @@ export function useChatImpl(channel?: string) {
     // Mirror remote moderation events
     client.on("messagedeleted", (_chName, _username, _msg, tags) => {
       const id = (tags as { "target-msg-id"?: string })["target-msg-id"];
-      if (id) setDeletedIds((s) => new Set(s).add(id));
+      if (!id) return;
+      setMessages((prev) => {
+        const next = prev.filter((m) => m.id !== id);
+        if (next.length !== prev.length) saveCache(ch, next);
+        return next;
+      });
     });
     client.on("ban", (_chName, username) => {
       setBannedUsers((s) => new Set(s).add(username.toLowerCase()));
@@ -293,7 +296,16 @@ export function useChatImpl(channel?: string) {
   const deleteMessage = useCallback(
     async (messageId: string) => {
       if (!token || !user || !settings.twitchClientId || !broadcasterId.current) return;
-      setDeletedIds((s) => new Set(s).add(messageId));
+      const ch = (channel ?? user.login).toLowerCase();
+      let removed: { msg: ChatMessage; index: number } | null = null;
+      setMessages((prev) => {
+        const i = prev.findIndex((m) => m.id === messageId);
+        if (i === -1) return prev;
+        removed = { msg: prev[i], index: i };
+        const next = prev.filter((_, idx) => idx !== i);
+        saveCache(ch, next);
+        return next;
+      });
       try {
         await helix(token.accessToken, settings.twitchClientId).deleteChatMessage(
           broadcasterId.current,
@@ -303,11 +315,15 @@ export function useChatImpl(channel?: string) {
       } catch (e) {
         const err = e as { status?: number; message?: string };
         if (err.status === 404) return; // already deleted
-        setDeletedIds((s) => {
-          const n = new Set(s);
-          n.delete(messageId);
-          return n;
-        });
+        if (removed) {
+          const r = removed as { msg: ChatMessage; index: number };
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === r.msg.id)) return prev;
+            const next = prev.slice();
+            next.splice(Math.min(r.index, next.length), 0, r.msg);
+            return next;
+          });
+        }
         flashError(err.message ?? "Delete failed");
       }
     },
@@ -375,7 +391,6 @@ export function useChatImpl(channel?: string) {
     send,
     sevenTvEmotes,
     canModerate,
-    deletedIds,
     bannedUsers,
     blockedUserIds,
     deleteMessage,

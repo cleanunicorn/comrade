@@ -75,7 +75,6 @@ export function ChatPanel() {
     send,
     sevenTvEmotes,
     canModerate,
-    deletedIds,
     bannedUsers,
     blockedUserIds,
     deleteMessage,
@@ -94,11 +93,10 @@ export function ChatPanel() {
     () =>
       messages.filter(
         (m) =>
-          !deletedIds.has(m.id) &&
           !blockedUserIds.has(m.userId) &&
           !bannedUsers.has(m.username),
       ),
-    [messages, deletedIds, blockedUserIds, bannedUsers],
+    [messages, blockedUserIds, bannedUsers],
   );
 
   useEffect(() => {

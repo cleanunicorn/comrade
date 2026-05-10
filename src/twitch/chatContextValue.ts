@@ -8,7 +8,6 @@ export interface ChatContextValue {
   send: (text: string) => void;
   sevenTvEmotes: Record<string, SevenTvEmote>;
   canModerate: boolean;
-  deletedIds: Set<string>;
   bannedUsers: Set<string>;
   blockedUserIds: Set<string>;
   deleteMessage: (messageId: string) => Promise<void>;
