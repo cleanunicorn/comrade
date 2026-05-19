@@ -63,6 +63,7 @@ export interface Settings {
   viewersFontSize: number;
   panelLayouts: PanelLayouts;
   hiddenPanels: PanelId[];
+  scanlinesEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -89,6 +90,7 @@ export const DEFAULT_SETTINGS: Settings = {
   viewersFontSize: 12,
   panelLayouts: DEFAULT_PANEL_LAYOUTS,
   hiddenPanels: [],
+  scanlinesEnabled: true,
 };
 
 function currentRedirectUri(): string {

@@ -64,6 +64,10 @@ body::before {
   z-index: 0;
 }
 
+body.no-scanlines::after {
+  display: none;
+}
+
 body::after {
   content: "";
   position: fixed;

@@ -131,6 +131,20 @@ export function Settings({ onDone, embedded }: Props) {
           </p>
         </div>
 
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 sw-accent text-[10px] text-[var(--sw-cyan)]">
+            <input
+              type="checkbox"
+              checked={settings.scanlinesEnabled}
+              onChange={(e) => update({ scanlinesEnabled: e.target.checked })}
+            />
+            Scanlines overlay
+          </label>
+          <p className="sw-mono text-[11px] text-[var(--sw-text-faint)]">
+            Disable for cleaner display or reduced eye strain.
+          </p>
+        </div>
+
         <div className="space-y-3 rounded-sm border border-[rgba(0,240,255,0.30)] bg-[rgba(0,240,255,0.04)] p-3">
           <div>
             <div className="sw-accent text-[11px] text-[var(--sw-cyan)]">▌ LLM (chat summaries)</div>

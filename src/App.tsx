@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
@@ -10,9 +10,13 @@ import { useSettings } from "./settings/useSettings";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function Shell() {
-  const { ready } = useSettings();
+  const { ready, settings } = useSettings();
   const { token, user, loading, error } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("no-scanlines", !settings.scanlinesEnabled);
+  }, [settings.scanlinesEnabled]);
 
   if (!ready) return <Settings />;
   if (showSettings) return <Settings onDone={() => setShowSettings(false)} />;
