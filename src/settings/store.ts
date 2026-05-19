@@ -91,14 +91,18 @@ export const DEFAULT_SETTINGS: Settings = {
   hiddenPanels: [],
 };
 
+function currentRedirectUri(): string {
+  return typeof window !== "undefined" ? window.location.origin + "/" : "";
+}
+
 export function loadSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS };
+    if (!raw) return { ...DEFAULT_SETTINGS, redirectUri: currentRedirectUri() };
     const parsed = JSON.parse(raw) as Partial<Settings>;
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return { ...DEFAULT_SETTINGS, ...parsed, redirectUri: currentRedirectUri() };
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, redirectUri: currentRedirectUri() };
   }
 }
 

@@ -10,7 +10,6 @@ interface Props {
 export function Settings({ onDone, embedded }: Props) {
   const { settings, update } = useSettings();
   const [clientId, setClientId] = useState(settings.twitchClientId);
-  const [redirectUri, setRedirectUri] = useState(settings.redirectUri);
   const [llmApiKey, setLlmApiKey] = useState(settings.llmApiKey);
   const [llmBaseUrl, setLlmBaseUrl] = useState(settings.llmBaseUrl);
   const [llmModel, setLlmModel] = useState(settings.llmModel);
@@ -21,7 +20,7 @@ export function Settings({ onDone, embedded }: Props) {
     e.preventDefault();
     update({
       twitchClientId: clientId.trim(),
-      redirectUri: redirectUri.trim(),
+      redirectUri: window.location.origin + "/",
       llmApiKey: llmApiKey.trim(),
       llmBaseUrl: llmBaseUrl.trim() || "https://api.openai.com/v1",
       llmModel: llmModel.trim() || "gpt-4o-mini",
@@ -123,13 +122,12 @@ export function Settings({ onDone, embedded }: Props) {
         <div className="space-y-2">
           <label className="sw-accent block text-[10px] text-[var(--sw-cyan)]">Redirect URI</label>
           <input
-            value={redirectUri}
-            onChange={(e) => setRedirectUri(e.target.value)}
-            className="sw-input w-full text-sm"
-            required
+            value={window.location.origin + "/"}
+            readOnly
+            className="sw-input w-full text-sm opacity-70"
           />
           <p className="sw-mono text-[11px] text-[var(--sw-text-faint)]">
-            Default: <code className="text-[var(--sw-cyan)]">{window.location.origin}/</code>
+            Auto-tracks current origin. Register this exact URL in Twitch dev console.
           </p>
         </div>
 
