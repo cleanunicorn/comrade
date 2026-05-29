@@ -26,7 +26,11 @@ export function ChatMessageActions({ username, onDelete, onTimeout, onBan, onBlo
   }
 
   return (
-    <div className="relative ml-2 hidden shrink-0 items-center gap-1 group-hover:flex">
+    <div
+      className={`relative ml-2 shrink-0 items-center gap-1 ${
+        openMenu ? "flex" : "hidden group-hover:flex"
+      }`}
+    >
       <IconBtn label="Delete message" onClick={onDelete}>
         <TrashIcon />
       </IconBtn>
