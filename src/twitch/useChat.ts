@@ -211,12 +211,17 @@ export function useChatImpl(channel?: string) {
         return next;
       });
     });
-    client.on("ban", (_chName, username) => {
-      setBannedUsers((s) => new Set(s).add(username.toLowerCase()));
-    });
-    client.on("timeout", (_chName, username) => {
-      setBannedUsers((s) => new Set(s).add(username.toLowerCase()));
-    });
+    const purgeUserMessages = (username: string) => {
+      const lc = username.toLowerCase();
+      setBannedUsers((s) => new Set(s).add(lc));
+      setMessages((prev) => {
+        const next = prev.filter((m) => m.username.toLowerCase() !== lc);
+        if (next.length !== prev.length) saveCache(ch, next);
+        return next;
+      });
+    };
+    client.on("ban", (_chName, username) => purgeUserMessages(username));
+    client.on("timeout", (_chName, username) => purgeUserMessages(username));
 
     client.connect().catch((e) => setStatus({ connected: false, error: String(e) }));
 
@@ -334,6 +339,7 @@ export function useChatImpl(channel?: string) {
     async (targetUserId: string, login: string, durationSec?: number, reason?: string) => {
       if (!token || !user || !settings.twitchClientId || !broadcasterId.current) return;
       const lc = login.toLowerCase();
+      const ch = (channel ?? user.login).toLowerCase();
       setBannedUsers((s) => new Set(s).add(lc));
       try {
         await helix(token.accessToken, settings.twitchClientId).banUser(
@@ -344,19 +350,27 @@ export function useChatImpl(channel?: string) {
         );
       } catch (e) {
         const err = e as { status?: number; message?: string };
-        if (err.status === 400) {
-          flashError("Already banned");
+        if (err.status !== 400) {
+          setBannedUsers((s) => {
+            const n = new Set(s);
+            n.delete(lc);
+            return n;
+          });
+          flashError(err.message ?? "Ban failed");
           return;
         }
-        setBannedUsers((s) => {
-          const n = new Set(s);
-          n.delete(lc);
-          return n;
-        });
-        flashError(err.message ?? "Ban failed");
+        flashError("Already banned");
+        // 400 = already banned server-side; fall through to purge cached messages
       }
+      // Ban succeeded (or already banned): purge the user's messages from
+      // state + cache so they stay gone after a refresh.
+      setMessages((prev) => {
+        const next = prev.filter((m) => m.username.toLowerCase() !== lc);
+        if (next.length !== prev.length) saveCache(ch, next);
+        return next;
+      });
     },
-    [token, user, settings.twitchClientId, flashError],
+    [token, user, channel, settings.twitchClientId, flashError],
   );
 
   const blockUser = useCallback(
